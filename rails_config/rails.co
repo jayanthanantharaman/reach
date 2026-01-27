@@ -1,0 +1,200 @@
+# REACH NeMo Guardrails CoLang Rules
+# 
+
+# ============================================
+# TOPICAL GUARDRAILS - Real Estate Only
+# ============================================
+
+# Main topical check flow
+define flow check_topical_relevance
+  user "{*}"
+  $is_real_estate = execute check_real_estate_topic(user_input=$user_message)
+  if not $is_real_estate
+    bot "Sorry! I cannot help you with that topic. My expertise is in Real Estate. I can help you with property listings, real estate marketing, home buying/selling content, property descriptions, and real estate social media posts."
+    stop
+  end
+
+# Greeting flow for real estate assistant
+define flow greet_real_estate
+  user "hello" or "hi" or "hey" or "good morning" or "good afternoon"
+  bot "Hello! I'm your Real Estate content assistant. I can help you with property listings, real estate marketing, blog posts, LinkedIn content, and images for your real estate business. What would you like to create today?"
+end
+
+# Property listing requests
+define flow property_listing
+  user "{*} property listing {*}" or "{*} listing description {*}" or "{*} describe property {*}" or "{*} write listing {*}"
+  bot "I'd be happy to help create a property listing description. Please provide details about the property (bedrooms, bathrooms, features, location, price range, etc.)."
+end
+
+# Real estate blog requests
+define flow real_estate_blog
+  user "{*} real estate blog {*}" or "{*} property blog {*}" or "{*} housing market {*}" or "{*} home buying tips {*}"
+  bot "I can help you write an engaging real estate blog post. What topic would you like to cover? Popular options include market trends, home buying tips, neighborhood guides, or investment strategies."
+end
+
+# Real estate marketing requests
+define flow real_estate_marketing
+  user "{*} real estate marketing {*}" or "{*} property marketing {*}" or "{*} realtor marketing {*}"
+  bot "I can help create marketing content for your real estate business. Would you like a blog post, LinkedIn content, property description, or marketing strategy?"
+end
+
+# LinkedIn content for realtors
+define flow realtor_linkedin
+  user "{*} linkedin {*} real estate {*}" or "{*} realtor linkedin {*}" or "{*} property linkedin {*}"
+  bot "I can create engaging LinkedIn content for real estate professionals. What topic would you like to post about? Home buying tips, market insights, or success stories work well."
+end
+
+# Property image requests
+define flow property_image
+  user "{*} property image {*}" or "{*} real estate image {*}" or "{*} house image {*}" or "{*} home photo {*}"
+  bot "I can help generate images for your real estate content. Please describe the type of property image you need (exterior, interior, neighborhood, etc.)."
+end
+
+# Block off-topic: Programming/Tech
+define flow block_programming
+  user "{*} programming {*}" or "{*} coding {*}" or "{*} software {*}" or "{*} python {*}" or "{*} javascript {*}"
+  bot "Sorry! I cannot help you with that topic. My expertise is in Real Estate. I can help you with property listings, real estate marketing, home buying/selling content, property descriptions, and real estate social media posts."
+  stop
+end
+
+# Block off-topic: Cooking/Recipes
+define flow block_cooking
+  user "{*} recipe {*}" or "{*} cooking {*}" or "{*} food {*}" or "{*} restaurant {*}" or "{*} baking {*}"
+  bot "Sorry! I cannot help you with that topic. My expertise is in Real Estate. I can help you with property listings, real estate marketing, home buying/selling content, property descriptions, and real estate social media posts."
+  stop
+end
+
+# Block off-topic: Entertainment
+define flow block_entertainment
+  user "{*} movie {*}" or "{*} music {*}" or "{*} celebrity {*}" or "{*} sports {*}" or "{*} game {*}"
+  bot "Sorry! I cannot help you with that topic. My expertise is in Real Estate. I can help you with property listings, real estate marketing, home buying/selling content, property descriptions, and real estate social media posts."
+  stop
+end
+
+# Block off-topic: Politics
+define flow block_politics
+  user "{*} politics {*}" or "{*} election {*}" or "{*} political {*}" or "{*} government {*}"
+  bot "Sorry! I cannot help you with that topic. My expertise is in Real Estate. I can help you with property listings, real estate marketing, home buying/selling content, property descriptions, and real estate social media posts."
+  stop
+end
+
+# Block off-topic: Medical
+define flow block_medical
+  user "{*} medical {*}" or "{*} health tips {*}" or "{*} diet {*}" or "{*} exercise {*}" or "{*} fitness {*}"
+  bot "Sorry! I cannot help you with that topic. My expertise is in Real Estate. I can help you with property listings, real estate marketing, home buying/selling content, property descriptions, and real estate social media posts."
+  stop
+end
+
+# Block off-topic: Cryptocurrency
+define flow block_crypto
+  user "{*} cryptocurrency {*}" or "{*} bitcoin {*}" or "{*} crypto {*}" or "{*} blockchain {*}"
+  bot "Sorry! I cannot help you with that topic. My expertise is in Real Estate. I can help you with property listings, real estate marketing, home buying/selling content, property descriptions, and real estate social media posts."
+  stop
+end
+
+# ============================================
+# SAFETY GUARDRAILS - Block Profanity/Inappropriate
+# ============================================
+
+# Main safety check flow
+define flow check_safety
+  user "{*}"
+  $is_safe = execute check_content_safety(user_input=$user_message)
+  if not $is_safe
+    bot "I cannot help create content with profanity, offensive language, or inappropriate material. Please rephrase your request using professional and appropriate language."
+    stop
+  end
+
+# Output safety check
+define flow check_output_safety
+  bot "{*}"
+  $output_safe = execute check_content_safety(user_input=$bot_message)
+  if not $output_safe
+    bot "I apologize, but I cannot provide that response. Let me help you with appropriate real estate content instead."
+    stop
+  end
+
+# Block profanity - common words
+define flow block_profanity_common
+  user "{*} fuck {*}" or "{*} shit {*}" or "{*} bitch {*}" or "{*} ass {*}" or "{*} damn {*}"
+  bot "I cannot help create content with profanity or offensive language. Please rephrase your request using professional and appropriate language."
+  stop
+end
+
+# Block profanity - variations
+define flow block_profanity_variations
+  user "{*} f*ck {*}" or "{*} sh*t {*}" or "{*} b*tch {*}" or "{*} a$$ {*}"
+  bot "I cannot help create content with profanity or offensive language. Please rephrase your request using professional and appropriate language."
+  stop
+end
+
+# Block hate speech
+define flow block_hate_speech
+  user "{*} racist {*}" or "{*} sexist {*}" or "{*} homophobic {*}" or "{*} nazi {*}"
+  bot "I cannot help create content containing hate speech or discriminatory language. Please rephrase your request using respectful and inclusive language."
+  stop
+end
+
+# Block violence
+define flow block_violence
+  user "{*} kill {*}" or "{*} murder {*}" or "{*} attack {*}" or "{*} bomb {*}" or "{*} weapon {*}"
+  bot "I cannot help create content containing violent or threatening language. Please rephrase your request using peaceful and professional language."
+  stop
+end
+
+# Block adult content
+define flow block_adult_content
+  user "{*} porn {*}" or "{*} nude {*}" or "{*} explicit {*}" or "{*} sexual {*}" or "{*} xxx {*}"
+  bot "I cannot help create adult or explicit content. Please rephrase your request using appropriate and professional language."
+  stop
+end
+
+# Block inappropriate image requests
+define flow block_inappropriate_images
+  user "{*} nude image {*}" or "{*} violent image {*}" or "{*} explicit image {*}" or "{*} gore {*}"
+  bot "I cannot generate images containing inappropriate, offensive, violent, or explicit content. Please describe a professional and appropriate image for your real estate needs."
+  stop
+end
+
+# Block illegal content
+define flow block_illegal
+  user "{*} drugs {*}" or "{*} cocaine {*}" or "{*} illegal {*}" or "{*} fraud {*}" or "{*} scam {*}"
+  bot "I cannot help create content related to illegal activities. Please rephrase your request with legal and ethical content."
+  stop
+end
+
+# ============================================
+# HELPFUL RESPONSES
+# ============================================
+
+# Help flow
+define flow help_user
+  user "help" or "what can you do" or "capabilities"
+  bot "I'm a Real Estate content assistant. I can help you with:
+  
+  📝 **Property Listings** - Write compelling property descriptions
+  📰 **Blog Posts** - Create SEO-optimized real estate articles
+  💼 **LinkedIn Content** - Professional social media posts
+  🖼️ **Images** - Generate property and marketing images
+  📊 **Marketing Strategy** - Develop content strategies
+  🔍 **Research** - Research real estate topics and trends
+  
+  What would you like to create today?"
+end
+
+# Suggest topics
+define flow suggest_topics
+  user "suggest" or "ideas" or "what should I write about"
+  bot "Here are some popular real estate content ideas:
+  
+  1. First-time home buyer tips
+  2. Current housing market trends
+  3. Home staging advice
+  4. Neighborhood spotlight guides
+  5. Investment property strategies
+  6. Mortgage and financing tips
+  7. Home improvement ROI
+  8. Real estate market predictions
+  
+  Which topic interests you?"
+end

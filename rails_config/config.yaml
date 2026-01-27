@@ -1,0 +1,94 @@
+# REACH NeMo Guardrails Configuration
+# 
+
+models:
+  - type: main
+    engine: google
+    model: gemini-1.5-pro
+    parameters:
+      temperature: 0.7
+
+rails:
+  input:
+    flows:
+      - check_topical_relevance
+      - check_safety
+  output:
+    flows:
+      - check_output_safety
+
+# Topical Guardrail Configuration
+topical:
+  domain: "Real Estate"
+  allowed_topics:
+    - property buying
+    - property selling
+    - property renting
+    - real estate marketing
+    - property descriptions
+    - property listings
+    - mortgage and financing
+    - home improvement
+    - real estate market analysis
+    - property management
+    - real estate social media
+    - real estate blog content
+    - property images
+  blocked_topics:
+    - programming
+    - cooking
+    - sports
+    - movies
+    - politics
+    - medical advice
+    - cryptocurrency
+    - video games
+
+# Safety Guardrail Configuration
+safety:
+  block_profanity: true
+  block_violence: true
+  block_adult_content: true
+  block_hate_speech: true
+  semantic_analysis: true
+
+prompts:
+  - task: check_topical_relevance
+    content: |
+      Determine if the user's request is related to Real Estate.
+      
+      Real Estate topics include:
+      - Property buying, selling, renting, or investing
+      - Real estate marketing and content creation
+      - Property descriptions and listings
+      - Home improvement for selling
+      - Real estate market analysis
+      - Mortgage and financing
+      - Property management
+      - Real estate social media and blog content
+      
+      User request: {{ user_input }}
+      
+      Respond with ONLY "on_topic" or "off_topic".
+
+  - task: check_safety
+    content: |
+      Check if the following text contains any inappropriate content:
+      - Profanity or offensive language
+      - Hate speech or discrimination
+      - Violence or threats
+      - Adult/explicit content
+      - Illegal activities
+      
+      Text: {{ user_input }}
+      
+      Respond with ONLY "safe" or "unsafe".
+
+  - task: check_output_safety
+    content: |
+      Verify the generated response is appropriate and professional.
+      Check for any profanity, offensive content, or inappropriate material.
+      
+      Response: {{ bot_response }}
+      
+      Respond with ONLY "safe" or "unsafe".
