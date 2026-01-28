@@ -66,9 +66,6 @@ Always maintain objectivity and clearly distinguish between facts and opinions."
         config = AgentConfig(
             name="Deep Research Agent",
             description="Conducts comprehensive web research and analysis",
-            model="gemini-1.5-pro",
-            temperature=0.3,  # Lower temperature for factual research
-            max_tokens=4096,
             system_prompt=system_prompt or self.DEFAULT_SYSTEM_PROMPT,
         )
         super().__init__(config, llm_client)

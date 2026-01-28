@@ -12,7 +12,24 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
+from ..core.config import get_settings
+
 logger = logging.getLogger(__name__)
+
+
+def _get_default_model() -> str:
+    """Get default model from settings."""
+    return get_settings().gemini_model
+
+
+def _get_default_temperature() -> float:
+    """Get default temperature from settings."""
+    return get_settings().gemini_temperature
+
+
+def _get_default_max_tokens() -> int:
+    """Get default max tokens from settings."""
+    return get_settings().gemini_max_tokens
 
 
 class AgentConfig(BaseModel):
@@ -20,9 +37,9 @@ class AgentConfig(BaseModel):
 
     name: str = Field(description="Agent name")
     description: str = Field(description="Agent description")
-    model: str = Field(default="gemini-1.5-pro", description="LLM model to use")
-    temperature: float = Field(default=0.7, description="Temperature for generation")
-    max_tokens: int = Field(default=4096, description="Maximum tokens for response")
+    model: str = Field(default_factory=_get_default_model, description="LLM model to use")
+    temperature: float = Field(default_factory=_get_default_temperature, description="Temperature for generation")
+    max_tokens: int = Field(default_factory=_get_default_max_tokens, description="Maximum tokens for response")
     system_prompt: str = Field(default="", description="System prompt for the agent")
 
 

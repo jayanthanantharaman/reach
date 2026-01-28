@@ -32,9 +32,6 @@ class InstagramWriterAgent(BaseAgent):
         config = AgentConfig(
             name="Instagram Writer Agent",
             description="Generates engaging Instagram captions with hashtags for real estate content",
-            model="gemini-1.5-pro",
-            temperature=0.8,
-            max_tokens=2000,
             system_prompt=self._get_system_prompt(),
         )
         super().__init__(config, llm_client)

@@ -73,9 +73,6 @@ Always write in a {tone} tone appropriate for the target audience."""
         config = AgentConfig(
             name="SEO Blog Writer Agent",
             description="Creates search-optimized blog posts and articles with images",
-            model="gemini-1.5-pro",
-            temperature=0.7,
-            max_tokens=6000,
             system_prompt=system_prompt or self.DEFAULT_SYSTEM_PROMPT,
         )
         super().__init__(config, llm_client)

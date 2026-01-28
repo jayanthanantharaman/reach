@@ -67,9 +67,6 @@ Always provide actionable, practical recommendations that can be implemented imm
         config = AgentConfig(
             name="Content Strategist Agent",
             description="Creates content strategies and marketing plans",
-            model="gemini-1.5-pro",
-            temperature=0.6,
-            max_tokens=4096,
             system_prompt=system_prompt or self.DEFAULT_SYSTEM_PROMPT,
         )
         super().__init__(config, llm_client)

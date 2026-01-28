@@ -66,9 +66,6 @@ If the user's request is unclear, help them refine it by asking specific questio
         config = AgentConfig(
             name="Query Handler Agent",
             description="Handles general queries and provides content creation guidance",
-            model="gemini-1.5-pro",
-            temperature=0.7,
-            max_tokens=2048,
             system_prompt=system_prompt or self.DEFAULT_SYSTEM_PROMPT,
         )
         super().__init__(config, llm_client)

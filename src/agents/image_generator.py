@@ -79,9 +79,6 @@ Image Style Guidelines:
         config = AgentConfig(
             name="Image Generation Agent",
             description="Creates high-quality visual content using Google Imagen",
-            model="gemini-1.5-pro",
-            temperature=0.7,
-            max_tokens=1000,
             system_prompt=system_prompt or self.DEFAULT_SYSTEM_PROMPT,
         )
         super().__init__(config, llm_client)

@@ -290,14 +290,41 @@ asyncio.run(create_content())
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GOOGLE_API_KEY` | Google API key for Gemini LLM and Imagen | Yes |
-| `SERP_API_KEY` | SERP API key for research | Yes |
-| `GEMINI_MODEL` | Gemini model name | No (default: gemini-1.5-pro) |
-| `IMAGEN_MODEL` | Imagen model name | No (default: imagen-3.0-generate-002) |
-| `DEBUG` | Enable debug mode | No (default: false) |
-| `LOG_LEVEL` | Logging level | No (default: INFO) |
+All configuration is centralized through environment variables. Copy `.env.example` to `.env` and configure your settings.
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `GOOGLE_API_KEY` | Google API key for Gemini LLM and Imagen | Yes | - |
+| `SERP_API_KEY` | SERP API key for research | Yes | - |
+| `GEMINI_MODEL` | Gemini model name | No | gemini-1.5-pro |
+| `GEMINI_TEMPERATURE` | Temperature for LLM responses | No | 0.7 |
+| `GEMINI_MAX_TOKENS` | Maximum tokens for responses | No | 8192 |
+| `IMAGEN_MODEL` | Imagen model name | No | imagen-3.0-generate-002 |
+| `DEBUG` | Enable debug mode | No | false |
+| `LOG_LEVEL` | Logging level | No | INFO |
+| `MAX_BLOG_LENGTH` | Maximum blog post length (words) | No | 2000 |
+| `MAX_LINKEDIN_LENGTH` | Maximum LinkedIn post length (chars) | No | 3000 |
+| `RATE_LIMIT_REQUESTS` | Max requests per minute | No | 60 |
+| `RATE_LIMIT_TOKENS` | Max tokens per minute | No | 100000 |
+| `MIN_QUALITY_SCORE` | Minimum quality score for content | No | 0.7 |
+
+### Centralized Configuration
+
+All agents automatically inherit settings from the centralized configuration. This means:
+
+- **Model settings** (model name, temperature, max tokens) are configured once in `.env`
+- **All agents** use these defaults automatically
+- **Individual calls** can still override settings when needed
+
+```python
+# Settings are automatically loaded from .env
+from src.core.config import get_settings
+
+settings = get_settings()
+print(settings.gemini_model)       # gemini-1.5-pro
+print(settings.gemini_temperature) # 0.7
+print(settings.gemini_max_tokens)  # 8192
+```
 
 ## 🧪 Testing
 

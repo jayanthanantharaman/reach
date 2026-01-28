@@ -74,9 +74,6 @@ Always write in a {tone} tone that resonates with professional audiences."""
         config = AgentConfig(
             name="LinkedIn Post Writer Agent",
             description="Creates engaging professional LinkedIn content",
-            model="gemini-1.5-pro",
-            temperature=0.8,  # Higher creativity for social content
-            max_tokens=2000,
             system_prompt=system_prompt or self.DEFAULT_SYSTEM_PROMPT,
         )
         super().__init__(config, llm_client)

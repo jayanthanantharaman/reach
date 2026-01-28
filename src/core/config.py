@@ -37,18 +37,6 @@ class Settings(BaseSettings):
         default=8192, description="Max tokens for Gemini responses"
     )
 
-    # OpenAI Settings (for DALL-E)
-    openai_api_key: str = Field(
-        default="", description="OpenAI API key for DALL-E", alias="OPENAI_API_KEY"
-    )
-    dalle_model: str = Field(default="dall-e-3", description="DALL-E model to use")
-    dalle_image_size: str = Field(
-        default="1024x1024", description="Default image size for DALL-E"
-    )
-    dalle_quality: str = Field(
-        default="standard", description="Image quality (standard or hd)"
-    )
-
     # SERP API Settings
     serp_api_key: str = Field(
         default="", description="SERP API key for web research", alias="SERP_API_KEY"
@@ -122,7 +110,6 @@ def validate_api_keys() -> dict[str, bool]:
     settings = get_settings()
     return {
         "google_api_key": bool(settings.google_api_key),
-        "openai_api_key": bool(settings.openai_api_key),
         "serp_api_key": bool(settings.serp_api_key),
     }
 
