@@ -7,14 +7,27 @@ multi-agent real estate content creation system.
 """
 
 import asyncio
+import base64
+import sys
 import uuid
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import streamlit as st
 
+# Ensure repo root is on sys.path so `src.*` imports work when run as a script.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+# Asset paths
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+LOGO_PATH = ASSETS_DIR / "ask_reach.png"
+
 # Import REACH components
-from ..workflow import REACHGraph
-from ..utils import ContentOptimizer, QualityValidator, ContentExporter
+from src.workflow import REACHGraph
+from src.utils import ContentOptimizer, QualityValidator, ContentExporter
 
 
 def get_or_create_event_loop():
@@ -31,6 +44,15 @@ def run_async(coro):
     """Run an async coroutine in the event loop."""
     loop = get_or_create_event_loop()
     return loop.run_until_complete(coro)
+
+
+@lru_cache
+def _logo_data_uri(path: Path) -> str:
+    """Return a data URI for the logo image, or empty string if missing."""
+    if not path.exists():
+        return ""
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
 
 
 def init_session_state():
@@ -60,7 +82,23 @@ def init_session_state():
 def render_sidebar():
     """Render the sidebar with options and settings."""
     with st.sidebar:
-        st.title("🏠 REACH")
+        logo_exists = LOGO_PATH.exists()
+        if logo_exists:
+            logo_uri = _logo_data_uri(LOGO_PATH)
+            if logo_uri:
+                st.markdown(
+                    f"""
+                    <div style="display:flex; align-items:center; gap:10px;">
+                      <img src="{logo_uri}" alt="REACH" style="width:36px; height:36px; object-fit:contain;" />
+                      <h2 style="margin:0; padding:0;">REACH</h2>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.title("REACH")
+        else:
+            st.title("REACH")
         st.markdown("*Real Estate Automated Content Hub*")
         st.caption("AI-Powered Content Creation for Real Estate")
 
@@ -150,7 +188,23 @@ def render_sidebar():
 
 def render_chat_interface():
     """Render the main chat interface."""
-    st.header("💬 Real Estate Content Assistant")
+    logo_exists = LOGO_PATH.exists()
+    if logo_exists:
+        logo_uri = _logo_data_uri(LOGO_PATH)
+        if logo_uri:
+            st.markdown(
+                f"""
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <img src="{logo_uri}" alt="Ask REACH" style="width:56px; height:56px; object-fit:contain;" />
+                  <h1 style="margin:0; padding:0;">Ask REACH</h1>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.title("Ask REACH")
+    else:
+        st.title("Ask REACH")
     st.caption("Create property listings, blogs, LinkedIn posts, and more!")
 
     # Display chat messages
@@ -337,7 +391,7 @@ def render_content_dashboard():
                             )
 
 
-def render_instagram_generator():
+def render_instagram_generator(key_prefix: str = "ig"):
     """Render the Instagram post generator."""
     st.header("📸 Instagram Post Generator")
     st.caption("Generate property images with engaging captions and hashtags")
@@ -350,48 +404,65 @@ def render_instagram_generator():
             "Describe the property image:",
             placeholder="Modern luxury home with pool and landscaped garden",
             height=100,
-            key="ig_image_desc",
+            key=f"{key_prefix}_image_desc",
         )
 
         property_type = st.selectbox(
             "Property Type:",
             ["House", "Condo", "Apartment", "Townhouse", "Villa", "Commercial", "Land"],
-            key="ig_property_type",
+            key=f"{key_prefix}_property_type",
         )
 
         location = st.text_input(
             "Location:",
             placeholder="Austin, TX",
-            key="ig_location",
+            key=f"{key_prefix}_location",
         )
 
         price = st.text_input(
             "Price (optional):",
             placeholder="$500,000",
-            key="ig_price",
+            key=f"{key_prefix}_price",
         )
 
         features = st.text_input(
             "Key Features (comma-separated):",
             placeholder="3 bedrooms, 2 bathrooms, pool, garden",
-            key="ig_features",
+            key=f"{key_prefix}_features",
         )
 
     with col2:
         st.subheader("Generation Options")
 
-        generate_image = st.checkbox("Generate Image", value=True, key="ig_gen_image")
-        generate_caption = st.checkbox("Generate Caption", value=True, key="ig_gen_caption")
+        generate_image = st.checkbox(
+            "Generate Image",
+            value=True,
+            key=f"{key_prefix}_gen_image",
+        )
+        generate_caption = st.checkbox(
+            "Generate Caption",
+            value=True,
+            key=f"{key_prefix}_gen_caption",
+        )
 
         caption_style = st.selectbox(
             "Caption Style:",
             ["Professional", "Casual", "Luxury", "Friendly", "Informative"],
-            key="ig_caption_style",
+            key=f"{key_prefix}_caption_style",
         )
 
-        include_cta = st.checkbox("Include Call-to-Action", value=True, key="ig_include_cta")
+        include_cta = st.checkbox(
+            "Include Call-to-Action",
+            value=True,
+            key=f"{key_prefix}_include_cta",
+        )
 
-    if st.button("🚀 Generate Instagram Post", use_container_width=True, type="primary"):
+    if st.button(
+        "🚀 Generate Instagram Post",
+        use_container_width=True,
+        type="primary",
+        key=f"{key_prefix}_generate",
+    ):
         if not image_description:
             st.warning("Please describe the property image.")
             return
@@ -457,7 +528,12 @@ def render_instagram_generator():
                     if result.get("caption") or result.get("full_post"):
                         st.subheader("📝 Caption")
                         caption = result.get("caption", result.get("full_post", ""))
-                        st.text_area("Caption:", value=caption, height=200, key="ig_result_caption")
+                        st.text_area(
+                            "Caption:",
+                            value=caption,
+                            height=200,
+                            key=f"{key_prefix}_result_caption",
+                        )
 
                         if result.get("hashtags"):
                             st.subheader("#️⃣ Hashtags")
@@ -483,6 +559,7 @@ def render_instagram_generator():
                             result.get("caption", ""),
                             "instagram_caption.txt",
                             "text/plain",
+                            key=f"{key_prefix}_download_caption",
                         )
                 with col2:
                     if result.get("full_post"):
@@ -491,6 +568,7 @@ def render_instagram_generator():
                             result.get("full_post", ""),
                             "instagram_post.txt",
                             "text/plain",
+                            key=f"{key_prefix}_download_post",
                         )
             else:
                 st.error(f"❌ Error: {result.get('error', 'Unknown error')}")
@@ -640,7 +718,7 @@ def render_tools_tab():
 
     # Instagram Generator
     with tool_tabs[3]:
-        render_instagram_generator()
+        render_instagram_generator(key_prefix="ig_tools")
 
 
 def main():
@@ -666,7 +744,7 @@ def main():
         render_chat_interface()
 
     with tab2:
-        render_instagram_generator()
+        render_instagram_generator(key_prefix="ig_main")
 
     with tab3:
         render_content_dashboard()

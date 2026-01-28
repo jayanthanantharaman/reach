@@ -9,7 +9,7 @@ for real estate images and property content.
 import logging
 from typing import Any, Optional
 
-from .base_agent import BaseAgent
+from .base_agent import AgentConfig, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,15 @@ class InstagramWriterAgent(BaseAgent):
         Args:
             llm_client: LLM client for content generation
         """
-        super().__init__(
-            name="Instagram Writer",
+        config = AgentConfig(
+            name="Instagram Writer Agent",
             description="Generates engaging Instagram captions with hashtags for real estate content",
-            llm_client=llm_client,
+            model="gemini-1.5-pro",
+            temperature=0.8,
+            max_tokens=2000,
+            system_prompt=self._get_system_prompt(),
         )
+        super().__init__(config, llm_client)
 
         # Real estate hashtag categories
         self.hashtag_categories = {

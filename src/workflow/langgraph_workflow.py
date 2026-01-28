@@ -20,7 +20,7 @@ from ..agents import (
     QueryHandlerAgent,
     ResearchAgent,
 )
-from ..core.router import ContentRouter, RouteDecision
+from ..core.router import ContentRouter, RoutingDecision
 from ..guardrails import GuardrailsManager
 from ..integrations import GeminiClient, ImagenClient, SerpClient
 from .state_management import ConversationState, SessionManager
@@ -32,7 +32,7 @@ class GraphState(TypedDict):
     """State for the LangGraph workflow."""
 
     user_input: str
-    route_decision: Optional[RouteDecision]
+    route_decision: Optional[RoutingDecision]
     research_results: Optional[dict[str, Any]]
     generated_content: Optional[str]
     content_type: Optional[str]
@@ -80,7 +80,7 @@ class REACHGraph:
         self._init_agents()
 
         # Initialize router
-        self.router = ContentRouter(llm_client=self.gemini_client)
+        self.router = ContentRouter()
 
         # Initialize session manager
         self.session_manager = SessionManager()

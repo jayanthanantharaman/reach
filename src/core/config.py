@@ -108,6 +108,10 @@ def get_settings() -> Settings:
     return Settings()
 
 
+# Eagerly expose a module-level settings instance for convenience imports.
+settings = get_settings()
+
+
 def validate_api_keys() -> dict[str, bool]:
     """
     Validate that required API keys are configured.
