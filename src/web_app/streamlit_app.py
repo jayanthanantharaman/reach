@@ -121,41 +121,6 @@ def render_sidebar():
 
         st.divider()
 
-        # Content type selector
-        st.subheader("Quick Actions")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📝 Blog", use_container_width=True):
-                st.session_state.quick_action = "blog"
-        with col2:
-            if st.button("💼 LinkedIn", use_container_width=True):
-                st.session_state.quick_action = "linkedin"
-
-        col3, col4 = st.columns(2)
-        with col3:
-            if st.button("🔍 Research", use_container_width=True):
-                st.session_state.quick_action = "research"
-        with col4:
-            if st.button("🖼️ Image", use_container_width=True):
-                st.session_state.quick_action = "image"
-
-        col5, col6 = st.columns(2)
-        with col5:
-            if st.button("📸 Instagram", use_container_width=True):
-                st.session_state.quick_action = "instagram"
-        with col6:
-            if st.button("📊 Strategy", use_container_width=True):
-                st.session_state.quick_action = "strategy"
-
-        # Instagram Post Generator (Image + Caption)
-        st.divider()
-        st.subheader("📸 Instagram Post")
-        if st.button("🎨 Generate Post", use_container_width=True, help="Generate image + caption with hashtags"):
-            st.session_state.show_instagram_generator = True
-
-        st.divider()
-
         # Guardrails status
         st.subheader("🛡️ Guardrails")
         guardrails_status = st.session_state.graph.get_guardrails_status()
@@ -176,36 +141,38 @@ def render_sidebar():
             st.session_state.generated_content = {}
             st.rerun()
 
-        if st.button("🗑️ Clear History", use_container_width=True):
+        if st.button("🗑️ Clear Chat", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
 
         st.divider()
 
         # Settings
-        st.subheader("Settings")
+        st.subheader("⚙️ Settings")
         st.session_state.use_streaming = st.checkbox(
             "🚀 Enable Streaming",
             value=st.session_state.get("use_streaming", True),
             help="Stream text as it's generated for a more interactive experience",
         )
         st.session_state.show_analysis = st.checkbox(
-            "Show Content Analysis",
+            "📊 Show Content Analysis",
             value=True,
-        )
-        st.session_state.auto_optimize = st.checkbox(
-            "Auto-optimize Content",
-            value=False,
         )
 
         st.divider()
 
-        # Topic suggestions
-        st.subheader("💡 Topic Ideas")
-        suggestions = st.session_state.graph.get_topic_suggestions()
-        if suggestions:
-            for suggestion in suggestions[:4]:
-                st.caption(f"• {suggestion}")
+        # Example prompts
+        st.subheader("💡 Try These Prompts")
+        example_prompts = [
+            "Write a blog post about home staging tips",
+            "Create a LinkedIn post about market trends",
+            "Generate an Instagram post for a luxury condo",
+            "Research current housing market in Austin",
+            "Generate an image for a modern home listing",
+            "Create a content strategy for a realtor",
+        ]
+        for prompt in example_prompts:
+            st.caption(f"• {prompt}")
 
 
 def render_copy_button(content: str, key: str):
@@ -431,21 +398,6 @@ def render_chat_interface():
 
     # Chat input
     if prompt := st.chat_input("What real estate content would you like to create?"):
-        # Handle quick actions
-        if hasattr(st.session_state, "quick_action"):
-            action = st.session_state.quick_action
-            del st.session_state.quick_action
-
-            action_prompts = {
-                "blog": f"Write a real estate blog post about: {prompt}",
-                "linkedin": f"Create a LinkedIn post for realtors about: {prompt}",
-                "instagram": f"Create an Instagram caption with hashtags for: {prompt}",
-                "research": f"Research real estate topic: {prompt}",
-                "image": f"Generate a property image of: {prompt}",
-                "strategy": f"Create a real estate content strategy for: {prompt}",
-            }
-            prompt = action_prompts.get(action, prompt)
-
         # Add user message
         st.session_state.messages.append({
             "role": "user",
@@ -1188,21 +1140,18 @@ def main():
     render_sidebar()
 
     # Main content area with tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["💬 Chat", "📸 Instagram", "📋 Dashboard", "📚 History", "🛠️ Tools"])
+    tab1, tab2, tab3, tab4 = st.tabs(["💬 Chat", "📋 Dashboard", "📚 History", "🛠️ Tools"])
 
     with tab1:
         render_chat_interface()
 
     with tab2:
-        render_instagram_generator(key_prefix="ig_main")
-
-    with tab3:
         render_content_dashboard()
 
-    with tab4:
+    with tab3:
         render_history_tab()
 
-    with tab5:
+    with tab4:
         render_tools_tab()
 
 
