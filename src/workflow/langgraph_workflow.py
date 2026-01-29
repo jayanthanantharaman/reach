@@ -313,7 +313,9 @@ class REACHGraph:
             }
 
     async def _blog_node(self, state: GraphState) -> GraphState:
-        """Execute blog writer agent."""
+        """Execute blog writer agent with header image generation."""
+        import re
+        
         try:
             user_input = state["user_input"]
             context = state.get("context", {})
@@ -322,17 +324,77 @@ class REACHGraph:
             if state.get("research_results"):
                 context["research_results"] = state["research_results"]
 
-            result = await self.blog_writer.generate(user_input, context)
+            # Step 1: Generate the blog content
+            logger.info(f"Generating blog content for: {user_input}")
+            blog_content = await self.blog_writer.generate(user_input, context)
 
             # Validate output
             if self.guardrails:
-                output_check = await self.guardrails.validate_output(result)
+                output_check = await self.guardrails.validate_output(blog_content)
                 if not output_check["passed"]:
-                    result = "I apologize, but I cannot provide that response. Please try a different query."
+                    return {
+                        **state,
+                        "generated_content": "I apologize, but I cannot provide that response. Please try a different query.",
+                        "content_type": "blog",
+                    }
+
+            # Step 2: Extract blog title and summary for image generation
+            # Try to extract the title from the blog content
+            title_match = re.search(r'^#\s+(.+)$', blog_content, re.MULTILINE)
+            blog_title = title_match.group(1) if title_match else user_input
+            
+            # Get first paragraph as summary (skip the title)
+            paragraphs = [p.strip() for p in blog_content.split('\n\n') if p.strip() and not p.strip().startswith('#')]
+            blog_summary = paragraphs[0][:200] if paragraphs else user_input
+
+            # Step 3: Generate a header image based on the blog content
+            image_data_uri = None
+            try:
+                # Check if image generation should proceed
+                should_generate_image = True
+                if self.guardrails:
+                    image_check = await self.guardrails.validate_image_request(blog_title)
+                    if not image_check["passed"]:
+                        logger.warning(f"Blog image blocked by guardrails: {image_check.get('message', 'Unknown')}")
+                        should_generate_image = False
+                
+                if should_generate_image:
+                    # Create an image prompt based on the blog content
+                    image_prompt = f"Create a professional blog header image for an article about: {blog_title}. The image should be visually appealing, relevant to real estate, and suitable for a blog post. Style: modern, professional, clean composition with space for text overlay."
+                    
+                    logger.info(f"Generating blog header image for: {blog_title}")
+                    image_result = await self.image_generator.generate(
+                        image_prompt,
+                        context={"style": "professional", "aspect_ratio": "16:9"},
+                    )
+                    
+                    # Extract the data URI from the image result
+                    if image_result:
+                        data_uri_match = re.search(r'(data:image/[^;\s]+;base64,[A-Za-z0-9+/=]+)', str(image_result))
+                        if data_uri_match:
+                            image_data_uri = data_uri_match.group(1)
+                        elif str(image_result).startswith("data:image"):
+                            image_data_uri = image_result
+                        else:
+                            logger.info(f"Blog image result format: {str(image_result)[:100]}...")
+                            
+            except Exception as img_error:
+                logger.error(f"Blog header image generation failed: {str(img_error)}")
+                # Continue without image - blog content is still valuable
+
+            # Step 4: Combine blog content with header image
+            if image_data_uri:
+                # Insert the header image at the beginning of the blog
+                full_content = f"""![Blog Header Image]({image_data_uri})
+
+{blog_content}
+"""
+            else:
+                full_content = blog_content
 
             return {
                 **state,
-                "generated_content": result,
+                "generated_content": full_content,
                 "content_type": "blog",
             }
         except Exception as e:

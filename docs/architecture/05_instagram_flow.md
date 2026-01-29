@@ -5,59 +5,141 @@ This document describes the Instagram post generation workflow in REACH.
 ## Overview
 
 REACH provides specialized methods for generating Instagram content:
-- **Full Instagram Post** - Image + Caption + Hashtags
+- **Full Instagram Post** - Image + Caption + Hashtags (via chat or API)
 - **Caption Only** - Caption + Hashtags (no image)
 - **Image Only** - Via the standard image generation flow
 
-## Instagram Post Generation Flow
+## Key Features (v1.2)
+
+- **Single Prompt Generation**: Type "Create an Instagram post for a luxury condo" and get both image AND caption
+- **Square Images**: 1:1 aspect ratio optimized for Instagram
+- **Concise Captions**: Max 150 words with 20-30 hashtags
+- **Automatic Routing**: Router prioritizes Instagram keywords
+
+## Instagram Post Generation Flow (Chat)
+
+When a user types an Instagram-related prompt in the chat, the following flow is executed:
 
 ```mermaid
 flowchart TD
-    START([📸 Instagram Post Request]) --> VALIDATE_INPUT{🛡️ Validate Input<br/>Guardrails}
+    START([📸 User: "Create Instagram post for..."]) --> ROUTER{🎯 Content Router}
     
-    VALIDATE_INPUT -->|Blocked| ERROR[❌ Return Error]
-    VALIDATE_INPUT -->|Passed| IMAGE_SAFETY{🖼️ Image Safety<br/>Check}
+    ROUTER -->|Detects instagram/ig/insta| INSTAGRAM_NODE[📸 Instagram Node]
     
-    IMAGE_SAFETY -->|Unsafe| ERROR
-    IMAGE_SAFETY -->|Safe| OPTIONS{Generation Options}
+    INSTAGRAM_NODE --> GUARDRAILS{🛡️ Image Safety Check}
     
-    OPTIONS -->|generate_instagram_post| BOTH[Generate Both]
-    OPTIONS -->|generate_instagram_caption| CAPTION_ONLY[Caption Only]
-    OPTIONS -->|run with image keywords| IMAGE_ONLY[Image Only]
+    GUARDRAILS -->|Blocked| CAPTION_ONLY[Caption Only Mode]
+    GUARDRAILS -->|Passed| GEN_IMAGE[🖼️ Generate Image<br/>1:1 aspect ratio]
     
-    BOTH --> GEN_IMAGE[🖼️ Generate Image<br/>via ImageGeneratorAgent]
-    GEN_IMAGE --> GEN_CAPTION[📝 Generate Caption<br/>via InstagramWriter.generate_for_image]
-    GEN_CAPTION --> ADD_HASHTAGS[#️⃣ Add Hashtags]
+    GEN_IMAGE --> EXTRACT_URI[Extract Data URI<br/>from Image Result]
+    EXTRACT_URI --> GEN_CAPTION[📝 Generate Caption<br/>via InstagramWriter]
+    CAPTION_ONLY --> GEN_CAPTION
     
-    CAPTION_ONLY --> GEN_CAPTION_SOLO[📝 Generate Caption<br/>via InstagramWriter.generate]
-    GEN_CAPTION_SOLO --> SPLIT_HASHTAGS[Split Caption & Hashtags]
+    GEN_CAPTION --> VALIDATE{🛡️ Validate Caption}
     
-    IMAGE_ONLY --> GEN_IMAGE_SOLO[🖼️ Generate Image<br/>via ImageGeneratorAgent]
+    VALIDATE -->|Safe| FORMAT[📦 Format Response]
+    VALIDATE -->|Unsafe| FALLBACK[🔄 Use Fallback Caption]
+    FALLBACK --> FORMAT
     
-    ADD_HASHTAGS --> VALIDATE_OUTPUT{🛡️ Validate Output}
-    SPLIT_HASHTAGS --> VALIDATE_OUTPUT
-    GEN_IMAGE_SOLO --> VALIDATE_OUTPUT
+    FORMAT --> COMBINE[Combine Image + Caption<br/>as Markdown]
     
-    VALIDATE_OUTPUT -->|Safe| COMBINE[📦 Combine Results]
-    VALIDATE_OUTPUT -->|Unsafe| FALLBACK[🔄 Use Fallback Caption]
-    FALLBACK --> COMBINE
-    
-    COMBINE --> RETURN([✅ Return Instagram Post])
-    ERROR --> END([📤 Return to User])
-    RETURN --> END
+    COMBINE --> RETURN([✅ Return Complete Post])
 
     style START fill:#e3f2fd
-    style ERROR fill:#ffcdd2
-    style RETURN fill:#c8e6c9
+    style INSTAGRAM_NODE fill:#e8f5e9
     style GEN_IMAGE fill:#fff3e0
     style GEN_CAPTION fill:#fff3e0
-    style ADD_HASHTAGS fill:#e8f5e9
+    style RETURN fill:#c8e6c9
     style FALLBACK fill:#fff3e0
+```
+
+## Instagram Node Implementation
+
+The `_instagram_node` in `langgraph_workflow.py` handles Instagram post generation:
+
+```python
+async def _instagram_node(self, state: GraphState) -> GraphState:
+    """Execute Instagram post generation (image + caption)."""
+    
+    # Step 1: Validate and generate image
+    should_generate_image = True
+    if self.guardrails:
+        image_check = await self.guardrails.validate_image_request(user_input)
+        if not image_check["passed"]:
+            should_generate_image = False
+    
+    if should_generate_image:
+        image_result = await self.image_generator.generate(
+            f"Generate a photorealistic real estate image for Instagram: {user_input}",
+            context={"style": "professional", "aspect_ratio": "1:1"},
+        )
+        
+        # Extract data URI from result
+        data_uri_match = re.search(r'(data:image/[^;\s]+;base64,[A-Za-z0-9+/=]+)', str(image_result))
+        if data_uri_match:
+            image_data_uri = data_uri_match.group(1)
+    
+    # Step 2: Generate caption with hashtags
+    caption_result = await self.instagram_writer.generate(user_input, context)
+    
+    # Step 3: Validate caption
+    if self.guardrails:
+        output_check = await self.guardrails.validate_output(caption_result)
+        if not output_check["passed"]:
+            caption_result = "Beautiful property! Contact us for more details. 🏠\n\n#realestate #property #home"
+    
+    # Step 4: Format response
+    if image_data_uri:
+        full_content = f"""## 📸 Instagram Post
+
+### 🖼️ Generated Image
+
+![Instagram Image]({image_data_uri})
+
+### 📝 Caption
+
+{caption_result}
+"""
+    else:
+        full_content = f"""## 📸 Instagram Post
+
+### 📝 Caption
+
+{caption_result}
+
+*Note: Image generation was not available for this request.*
+"""
+    
+    return {
+        **state,
+        "generated_content": full_content,
+        "content_type": "instagram",
+    }
+```
+
+## Content Router Priority
+
+Instagram keywords are checked **first** in the router to ensure proper routing:
+
+```python
+# Keywords (checked first)
+ContentType.INSTAGRAM: [
+    "instagram", "instagram post", "instagram caption",
+    "ig post", "ig caption", "insta", "insta post",
+    "hashtag", "hashtags", "caption", "reel", "story",
+],
+
+# Patterns (checked first)
+ContentType.INSTAGRAM: [
+    r"(?:create|write|generate|make) (?:a |an )?(?:instagram|ig|insta) (?:post|caption|content)\s*.*",
+    r"instagram (?:post|caption|content) (?:for|about|to)\s+.+",
+    r"(?:photorealistic |photo realistic )?instagram\s+.+",
+],
 ```
 
 ## API Methods
 
-### generate_instagram_post
+### generate_instagram_post (Direct API)
 
 Generates a complete Instagram post with image and caption.
 
@@ -96,28 +178,15 @@ async def generate_instagram_post(
 **Example:**
 ```python
 result = await graph.generate_instagram_post(
-    image_description="Modern kitchen with granite countertops and stainless steel appliances",
+    image_description="Modern kitchen with granite countertops",
     property_details={
         "location": "San Francisco, CA",
         "price": "$1,200,000",
-        "bedrooms": 3,
-        "bathrooms": 2
     }
 )
-
-# Result:
-# {
-#     "success": True,
-#     "image": "https://...",
-#     "caption": "✨ Dream kitchen goals! This stunning modern kitchen features...",
-#     "hashtags": "#realestate #dreamhome #modernkitchen #sanfrancisco #luxuryhome",
-#     "full_post": "✨ Dream kitchen goals! This stunning modern kitchen features...\n\n#realestate #dreamhome #modernkitchen #sanfrancisco #luxuryhome",
-#     "session_id": "abc123",
-#     "guardrails": {"blocked": False}
-# }
 ```
 
-### generate_instagram_caption
+### generate_instagram_caption (Caption Only)
 
 Generates only an Instagram caption with hashtags (no image).
 
@@ -130,92 +199,45 @@ async def generate_instagram_caption(
 ) -> dict[str, Any]:
 ```
 
-**Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `content_description` | `str` | Description of the content |
-| `context` | `Optional[dict]` | Additional context (property details, etc.) |
-| `session_id` | `Optional[str]` | Session ID for conversation continuity |
+### run (Chat Interface)
 
-**Returns:**
+Use the standard `run` method with Instagram keywords:
+
 ```python
-{
-    "success": bool,
-    "caption": str,         # Main caption text
-    "hashtags": str,        # Hashtag string
-    "full_post": str,       # Caption + Hashtags combined
-    "session_id": str,
-    "guardrails": {
-        "blocked": bool,
-        "blocked_by": str | None
-    }
-}
+# This automatically routes to Instagram node
+result = await graph.run("Create an Instagram post for a luxury condo")
+# Returns: Image + Caption with hashtags
 ```
 
-**Example:**
-```python
-result = await graph.generate_instagram_caption(
-    content_description="Just sold this beautiful 3-bedroom home in the heart of downtown",
-    context={"property_type": "residential", "sale_type": "just_sold"}
-)
+## Caption Requirements
 
-# Result:
-# {
-#     "success": True,
-#     "caption": "🎉 JUST SOLD! Another happy family found their dream home...",
-#     "hashtags": "#justsold #realestate #realtor #dreamhome #homesweethome",
-#     "full_post": "🎉 JUST SOLD! Another happy family found their dream home...\n\n#justsold #realestate #realtor #dreamhome #homesweethome",
-#     "session_id": "abc123",
-#     "guardrails": {"blocked": False}
-# }
+The Instagram Writer Agent follows these requirements:
+
+1. **Max 150 words** (excluding hashtags)
+2. **20-30 hashtags** at the end
+3. **Emoji usage** for visual appeal
+4. **Call-to-action** included
+5. **Hashtags separated** by blank line
+
+Example output:
 ```
+✨ Welcome to your dream home! 🏠
 
-## Validation Steps
+This stunning 3-bedroom luxury condo features breathtaking city views, 
+modern finishes, and an open floor plan perfect for entertaining.
 
-### 1. Input Validation
+📍 Prime downtown location
+🛏️ 3 bedrooms, 2 bathrooms
+✨ Floor-to-ceiling windows
+🏊 Pool & fitness center access
 
-Both methods validate input against guardrails:
+Ready to make this your new home? DM us for a private showing! 💬
 
-```python
-if self.guardrails:
-    input_check = await self.guardrails.validate_input(image_description, "image")
-    if not input_check["passed"]:
-        return {
-            "success": False,
-            "error": input_check["message"],
-            "guardrails": {"blocked": True, "blocked_by": input_check["blocked_by"]},
-        }
-```
-
-### 2. Image Safety Check
-
-For image generation, additional safety checks are performed:
-
-```python
-if self.guardrails:
-    image_check = await self.guardrails.validate_image_request(image_description)
-    if not image_check["passed"]:
-        return {
-            "success": False,
-            "error": image_check["message"],
-            "guardrails": {"blocked": True, "blocked_by": "safety"},
-        }
-```
-
-### 3. Output Validation
-
-Generated captions are validated before returning:
-
-```python
-if self.guardrails:
-    output_check = await self.guardrails.validate_output(caption_result["full_post"])
-    if not output_check["passed"]:
-        # Use fallback caption
-        caption_result = {
-            "caption": "Beautiful property! Contact us for more details. 🏠",
-            "hashtags": "#realestate #property #home #dreamhome #realtor",
-            "full_post": "Beautiful property! Contact us for more details. 🏠\n\n#realestate #property #home #dreamhome #realtor",
-        }
+#realestate #luxurycondo #dreamhome #cityviews #modernliving 
+#realtorlife #homesweethome #propertyforrent #luxuryliving 
+#interiordesign #homegoals #apartmentliving #condoliving 
+#downtownliving #realestateinvesting #househunting #newhome 
+#luxuryrealestate #homeforsale #realestateagent
 ```
 
 ## Fallback Caption
@@ -230,48 +252,18 @@ If output validation fails, a safe fallback caption is used:
 }
 ```
 
-## Instagram Writer Agent
+## Streaming Behavior
 
-The `InstagramWriterAgent` provides two methods:
-
-### generate
-
-Standard generation method for captions:
+Instagram requests **do not use streaming** because they generate images:
 
 ```python
-result = await self.instagram_writer.generate(user_input, context)
-```
+# In streamlit_app.py
+is_instagram_request = any(word in prompt_lower for word in ["instagram", "ig post", "insta"])
 
-### generate_for_image
-
-Specialized method for generating captions for a specific image:
-
-```python
-caption_result = await self.instagram_writer.generate_for_image(
-    image_prompt=image_description,
-    image_url=image_result if isinstance(image_result, str) and image_result.startswith("http") else None,
-    property_details=property_details,
-)
-```
-
-**Returns:**
-```python
-{
-    "caption": str,
-    "hashtags": str,
-    "full_post": str
-}
-```
-
-## Caption Splitting
-
-For caption-only generation, the result is split into caption and hashtags:
-
-```python
-# Split caption and hashtags
-parts = caption.rsplit("\n\n", 1)
-main_caption = parts[0]
-hashtags = parts[1] if len(parts) > 1 and "#" in parts[1] else ""
+if st.session_state.use_streaming and not is_instagram_request:
+    # Use streaming
+else:
+    # Use non-streaming (for Instagram)
 ```
 
 ## Error Handling
@@ -282,14 +274,14 @@ Errors are caught and returned with appropriate messages:
 except Exception as e:
     logger.error(f"Instagram post generation error: {str(e)}")
     return {
-        "success": False,
-        "error": str(e),
-        "guardrails": {"blocked": False},
+        **state,
+        "error": f"Instagram post generation failed: {str(e)}",
     }
 ```
 
 ## Related Documentation
 
 - [Main Workflow](./01_main_workflow.md)
+- [Content Router](./04_content_router.md)
 - [Guardrails](./03_guardrails.md)
 - [Agent Routing](./06_agent_routing.md)

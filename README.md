@@ -254,13 +254,13 @@ pip install jupyterlab-mermaid
 
 ### Web Interface
 
-The Streamlit web interface provides five main tabs:
+The Streamlit web interface provides three main tabs:
 
-1. **💬 Chat**: Conversational interface with real-time streaming text generation
-2. **📸 Instagram**: Dedicated Instagram post generator (image + caption)
-3. **📋 Dashboard**: View and manage content generated in current session
-4. **📚 History**: Browse persistent content history (last 5 items per type)
-5. **🛠️ Tools**: SEO analyzer, quality checker, and export tools
+1. **💬 Chat**: Conversational interface with intelligent routing - all content generation happens here
+2. **📚 History**: Browse persistent content history (last 5 items per type)
+3. **🛠️ Tools**: SEO analyzer, quality checker, export tools, and Instagram generator form
+
+**Note:** All content generation (blogs, LinkedIn posts, Instagram posts, images, research, strategy) is handled through the Chat interface. The router automatically detects your intent and routes to the appropriate agent.
 
 ### Streaming Text Generation
 
@@ -289,16 +289,18 @@ The History tab provides persistent storage across sessions:
 - **Management**: Delete individual items or clear by type
 - **Statistics**: View total items, content types, and latest entry
 
-### Quick Actions
+### Intelligent Content Routing
 
-Use the sidebar buttons for quick content creation:
-- **📝 Blog**: Write SEO-optimized real estate blog posts
-- **💼 LinkedIn**: Create engaging LinkedIn posts for realtors
-- **📸 Instagram**: Create Instagram captions with hashtags
-- **🔍 Research**: Conduct deep research on real estate topics
-- **🖼️ Image**: Generate custom property images with Google Imagen
-- **📊 Strategy**: Develop real estate content strategies
-- **🎨 Instagram Post**: Generate complete Instagram posts (image + caption)
+REACH automatically detects your intent and routes to the appropriate agent. Just type naturally in the chat:
+
+| Content Type | Trigger Keywords | What You Get |
+|--------------|------------------|--------------|
+| **📝 Blog** | blog, article, write, guide | SEO-optimized blog post + header image (16:9) |
+| **💼 LinkedIn** | linkedin, professional, b2b | Professional LinkedIn post |
+| **📸 Instagram** | instagram, ig, insta, caption | Image (1:1) + caption with 20-30 hashtags |
+| **🔍 Research** | research, find, analyze, what is | Comprehensive research summary |
+| **🖼️ Image** | image, picture, photo, generate | Custom property image |
+| **📊 Strategy** | strategy, plan, campaign | Content marketing strategy |
 
 ### Example Prompts
 

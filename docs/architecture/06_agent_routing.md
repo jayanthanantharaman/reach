@@ -4,7 +4,7 @@ This document describes how requests are routed to specific agents in the REACH 
 
 ## Overview
 
-After the Content Router determines the content type, the workflow's `_determine_next_node` method maps the routing decision to a specific agent node.
+After the Content Router determines the content type, the workflow's `_determine_next_node` method maps the routing decision to a specific agent node. Some agents (Blog, Instagram) now include **automatic image generation**.
 
 ## Agent Routing Flow
 
@@ -15,30 +15,30 @@ flowchart TD
     DETERMINE -->|error in state| END_NODE[END]
     DETERMINE -->|no route_decision| GENERAL_NODE[general]
     
-    DETERMINE -->|"research" in agent_type| RESEARCH_NODE[research]
-    DETERMINE -->|"blog" in agent_type| BLOG_NODE[blog]
-    DETERMINE -->|"linkedin" in agent_type| LINKEDIN_NODE[linkedin]
-    DETERMINE -->|"instagram" or "caption" in agent_type| INSTAGRAM_NODE[instagram]
-    DETERMINE -->|"image" in agent_type| IMAGE_NODE[image]
-    DETERMINE -->|"strateg" in agent_type| STRATEGY_NODE[strategy]
+    DETERMINE -->|content_type = research| RESEARCH_NODE[research]
+    DETERMINE -->|content_type = blog| BLOG_NODE[blog]
+    DETERMINE -->|content_type = linkedin| LINKEDIN_NODE[linkedin]
+    DETERMINE -->|content_type = instagram| INSTAGRAM_NODE[instagram]
+    DETERMINE -->|content_type = image| IMAGE_NODE[image]
+    DETERMINE -->|content_type = strategy| STRATEGY_NODE[strategy]
     DETERMINE -->|default| GENERAL_NODE
     
-    RESEARCH_NODE --> RESEARCH_AGENT[🔍 ResearchAgent]
-    BLOG_NODE --> BLOG_AGENT[📝 BlogWriterAgent]
-    LINKEDIN_NODE --> LINKEDIN_AGENT[💼 LinkedInWriterAgent]
-    INSTAGRAM_NODE --> INSTAGRAM_AGENT[📸 InstagramWriterAgent]
-    IMAGE_NODE --> IMAGE_AGENT[🖼️ ImageGeneratorAgent]
-    STRATEGY_NODE --> STRATEGY_AGENT[📊 ContentStrategistAgent]
-    GENERAL_NODE --> QUERY_AGENT[🤖 QueryHandlerAgent]
+    RESEARCH_NODE --> RESEARCH_AGENT[🔍 ResearchAgent<br/>Text Only]
+    BLOG_NODE --> BLOG_AGENT[📝 BlogWriterAgent<br/>+ Header Image 16:9]
+    LINKEDIN_NODE --> LINKEDIN_AGENT[💼 LinkedInWriterAgent<br/>Text Only]
+    INSTAGRAM_NODE --> INSTAGRAM_AGENT[📸 InstagramWriterAgent<br/>+ Post Image 1:1]
+    IMAGE_NODE --> IMAGE_AGENT[🖼️ ImageGeneratorAgent<br/>Custom Aspect Ratio]
+    STRATEGY_NODE --> STRATEGY_AGENT[📊 ContentStrategistAgent<br/>Text Only]
+    GENERAL_NODE --> QUERY_AGENT[🤖 QueryHandlerAgent<br/>Text Only]
 
     style DETERMINE fill:#fff3e0
     style RESEARCH_AGENT fill:#e8f5e9
-    style BLOG_AGENT fill:#e8f5e9
+    style BLOG_AGENT fill:#fff3e0
     style LINKEDIN_AGENT fill:#e8f5e9
-    style INSTAGRAM_AGENT fill:#e8f5e9
-    style IMAGE_AGENT fill:#e8f5e9
+    style INSTAGRAM_AGENT fill:#fff3e0
+    style IMAGE_AGENT fill:#fff3e0
     style STRATEGY_AGENT fill:#e8f5e9
-    style QUERY_AGENT fill:#fff3e0
+    style QUERY_AGENT fill:#e8f5e9
 ```
 
 ## _determine_next_node Implementation
@@ -56,22 +56,21 @@ def _determine_next_node(
     if not route:
         return "general"
 
-    agent_type = route.agent_type.lower()
+    content_type = route.content_type.value if hasattr(route.content_type, "value") else str(route.content_type)
 
-    if "research" in agent_type:
+    if content_type == "research":
         return "research"
-    elif "blog" in agent_type:
+    if content_type == "blog":
         return "blog"
-    elif "linkedin" in agent_type:
+    if content_type == "linkedin":
         return "linkedin"
-    elif "instagram" in agent_type or "caption" in agent_type:
+    if content_type == "instagram":
         return "instagram"
-    elif "image" in agent_type:
+    if content_type == "image":
         return "image"
-    elif "strateg" in agent_type:
+    if content_type == "strategy":
         return "strategy"
-    else:
-        return "general"
+    return "general"
 ```
 
 ## Available Agents
@@ -79,6 +78,8 @@ def _determine_next_node(
 ### 🔍 Research Agent
 
 **Purpose:** Research topics using SERP API and synthesize findings.
+
+**Image Generation:** ❌ None
 
 **Initialization:**
 ```python
@@ -102,27 +103,49 @@ async def _research_node(self, state: GraphState) -> GraphState:
 
 ### 📝 Blog Writer Agent
 
-**Purpose:** Write SEO-optimized blog posts with optional images.
+**Purpose:** Write SEO-optimized blog posts with automatic header images.
+
+**Image Generation:** ✅ 16:9 Header Image
 
 **Initialization:**
 ```python
 self.blog_writer = BlogWriterAgent(
     llm_client=self.gemini_client,
-    image_client=self.imagen_client,  # For inline images
+    image_client=self.imagen_client,
 )
 ```
 
 **Node Implementation:**
 ```python
 async def _blog_node(self, state: GraphState) -> GraphState:
-    # Include research results if available
-    if state.get("research_results"):
-        context["research_results"] = state["research_results"]
+    # Step 1: Generate blog content
+    blog_content = await self.blog_writer.generate(user_input, context)
     
-    result = await self.blog_writer.generate(user_input, context)
+    # Step 2: Extract title for image generation
+    title_match = re.search(r'^#\s+(.+)$', blog_content, re.MULTILINE)
+    blog_title = title_match.group(1) if title_match else user_input
+    
+    # Step 3: Generate header image (16:9)
+    if should_generate_image:
+        image_prompt = f"Create a professional blog header image for: {blog_title}"
+        image_result = await self.image_generator.generate(
+            image_prompt,
+            context={"style": "professional", "aspect_ratio": "16:9"},
+        )
+        # Extract data URI from result
+        data_uri_match = re.search(r'(data:image/[^;\s]+;base64,[A-Za-z0-9+/=]+)', str(image_result))
+        if data_uri_match:
+            image_data_uri = data_uri_match.group(1)
+    
+    # Step 4: Combine image + blog
+    if image_data_uri:
+        full_content = f"![Blog Header Image]({image_data_uri})\n\n{blog_content}"
+    else:
+        full_content = blog_content
+    
     return {
         **state,
-        "generated_content": result,
+        "generated_content": full_content,
         "content_type": "blog",
     }
 ```
@@ -130,6 +153,8 @@ async def _blog_node(self, state: GraphState) -> GraphState:
 ### 💼 LinkedIn Writer Agent
 
 **Purpose:** Create professional LinkedIn posts.
+
+**Image Generation:** ❌ None
 
 **Initialization:**
 ```python
@@ -149,7 +174,9 @@ async def _linkedin_node(self, state: GraphState) -> GraphState:
 
 ### 📸 Instagram Writer Agent
 
-**Purpose:** Generate Instagram captions with hashtags.
+**Purpose:** Generate Instagram posts with images and captions.
+
+**Image Generation:** ✅ 1:1 Square Image
 
 **Initialization:**
 ```python
@@ -159,10 +186,45 @@ self.instagram_writer = InstagramWriterAgent(llm_client=self.gemini_client)
 **Node Implementation:**
 ```python
 async def _instagram_node(self, state: GraphState) -> GraphState:
-    result = await self.instagram_writer.generate(user_input, context)
+    # Step 1: Generate image (1:1 aspect ratio)
+    if should_generate_image:
+        image_result = await self.image_generator.generate(
+            f"Generate a photorealistic real estate image for Instagram: {user_input}",
+            context={"style": "professional", "aspect_ratio": "1:1"},
+        )
+        # Extract data URI
+        data_uri_match = re.search(r'(data:image/[^;\s]+;base64,[A-Za-z0-9+/=]+)', str(image_result))
+        if data_uri_match:
+            image_data_uri = data_uri_match.group(1)
+    
+    # Step 2: Generate caption with hashtags
+    caption_result = await self.instagram_writer.generate(user_input, context)
+    
+    # Step 3: Format as Instagram post
+    if image_data_uri:
+        full_content = f"""## 📸 Instagram Post
+
+### 🖼️ Generated Image
+
+![Instagram Image]({image_data_uri})
+
+### 📝 Caption
+
+{caption_result}
+"""
+    else:
+        full_content = f"""## 📸 Instagram Post
+
+### 📝 Caption
+
+{caption_result}
+
+*Note: Image generation was not available for this request.*
+"""
+    
     return {
         **state,
-        "generated_content": result,
+        "generated_content": full_content,
         "content_type": "instagram",
     }
 ```
@@ -170,6 +232,8 @@ async def _instagram_node(self, state: GraphState) -> GraphState:
 ### 🖼️ Image Generator Agent
 
 **Purpose:** Generate property images using Imagen.
+
+**Image Generation:** ✅ Custom Aspect Ratio
 
 **Initialization:**
 ```python
@@ -204,6 +268,8 @@ async def _image_node(self, state: GraphState) -> GraphState:
 
 **Purpose:** Create content strategies and marketing plans.
 
+**Image Generation:** ❌ None
+
 **Initialization:**
 ```python
 self.content_strategist = ContentStrategistAgent(llm_client=self.gemini_client)
@@ -224,6 +290,8 @@ async def _strategy_node(self, state: GraphState) -> GraphState:
 
 **Purpose:** Handle general queries and fallback requests.
 
+**Image Generation:** ❌ None
+
 **Initialization:**
 ```python
 self.query_handler = QueryHandlerAgent(llm_client=self.gemini_client)
@@ -240,9 +308,21 @@ async def _general_node(self, state: GraphState) -> GraphState:
     }
 ```
 
+## Agent Summary Table
+
+| Agent | Content Type | Image Generation | Aspect Ratio | Streaming |
+|-------|--------------|------------------|--------------|-----------|
+| 🔍 Research | research | ❌ | - | ✅ Yes |
+| 📝 Blog Writer | blog | ✅ Header | 16:9 | ❌ No |
+| 💼 LinkedIn Writer | linkedin | ❌ | - | ✅ Yes |
+| 📸 Instagram Writer | instagram | ✅ Post | 1:1 | ❌ No |
+| 🖼️ Image Generator | image | ✅ Custom | User-defined | ❌ No |
+| 📊 Content Strategist | strategy | ❌ | - | ✅ Yes |
+| 🤖 Query Handler | general | ❌ | - | ✅ Yes |
+
 ## Output Validation
 
-All agent nodes (except image) validate output against safety guardrails:
+All agent nodes validate output against safety guardrails:
 
 ```python
 # Validate output
@@ -338,4 +418,5 @@ def _init_agents(self) -> None:
 
 - [Main Workflow](./01_main_workflow.md)
 - [Content Router](./04_content_router.md)
+- [Instagram Flow](./05_instagram_flow.md)
 - [GraphState Structure](./02_graph_state.md)
