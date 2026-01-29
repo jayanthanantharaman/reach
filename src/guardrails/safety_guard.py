@@ -25,52 +25,90 @@ class SafetyGuard:
     PROFANITY_WORDS = [
         # Common profanity (censored for code readability)
         "fuck", "fucking", "fucked", "fucker", "fck",
-        "shit", "shitty", "bullshit", "bs",
-        "ass", "asshole", "arse",
+        "shit", "shitty", "bullshit",
+        "asshole", "arse",  # Note: "ass" removed due to false positives (class, glass, grass, etc.)
         "bitch", "bitchy",
-        "damn", "damned", "dammit",
-        "hell", "hellish",
-        "crap", "crappy",
         "bastard",
-        "dick", "dickhead",
-        "piss", "pissed",
+        "dickhead",
+        "piss", "pissed off",
         "whore", "slut",
-        "cock", "cunt",
+        "cunt",
         # Slurs and hate speech indicators
         "racist", "racism",
         "sexist", "sexism",
         "homophobic", "homophobia",
         "nazi", "fascist",
-        # Violence indicators
-        "kill", "murder", "attack",
-        "bomb", "terrorist", "terrorism",
-        "weapon", "gun violence",
-        "suicide", "self-harm",
+        # Violence indicators (only explicit violence)
+        "murder", "terrorist", "terrorism",
+        "gun violence",
+        "self-harm",
+    ]
+
+    # Words that are safe even though they contain profanity substrings
+    # These are legitimate words that should NOT trigger the filter
+    SAFE_WORDS = [
+        # Words containing "ass"
+        "class", "classes", "classic", "classical", "classify", "classification",
+        "glass", "glasses", "glassware", "fiberglass",
+        "grass", "grassy", "grassland",
+        "pass", "passed", "passing", "passage", "passenger", "passport",
+        "mass", "massive", "massage",
+        "bass", "bassist",
+        "brass", "brassy",
+        "assess", "assessment", "assessor",
+        "assist", "assistant", "assistance",
+        "associate", "associated", "association",
+        "assume", "assumed", "assumption",
+        "assure", "assured", "assurance",
+        "asset", "assets",
+        "assign", "assigned", "assignment",
+        "assemble", "assembled", "assembly",
+        "assert", "assertion", "assertive",
+        "cassette", "casserole",
+        "embassy", "embarrass", "embarrassed", "embarrassing",
+        "harass", "harassment",
+        "compass", "compassion", "compassionate",
+        "trespass", "trespassing",
+        "surpass", "surpassed",
+        "bypass", "bypassed",
+        "overpass", "underpass",
+        "sassafras", "sassy",
+        # Words containing "hell"
+        "hello", "shell", "shells", "shellfish", "seashell",
+        "dwell", "dwelling", "farewell",
+        "michelle", "rochelle", "campbell",
+        "hellenistic", "hellenic",
+        # Words containing "damn"
+        "amsterdam", "goddamn",
+        # Words containing "dick"
+        "dickens", "edickt", "predict", "prediction", "verdict",
+        # Words containing "cock"
+        "peacock", "hancock", "cockpit", "cocktail",
+        # Words containing "piss"
+        "mississippi",
+        # Words containing "crap"
+        "scrap", "scrape", "scraps",
     ]
 
     # Inappropriate content categories
     INAPPROPRIATE_CATEGORIES = [
         # Adult content
-        "pornography", "porn", "xxx", "adult content",
-        "nude", "nudity", "naked", "explicit",
-        "sexual", "sexually explicit", "erotic",
+        "pornography", "porn", "xxx",
+        "nude", "nudity", "naked",
+        "sexually explicit", "erotic",
         
         # Violence
-        "gore", "gory", "violent", "violence",
-        "blood", "bloody", "gruesome",
+        "gore", "gory", "gruesome",
         "torture", "torturing",
-        "abuse", "abusive",
         
         # Illegal activities
-        "drugs", "cocaine", "heroin", "meth",
-        "illegal", "crime", "criminal",
+        "cocaine", "heroin", "meth",
         "fraud", "scam", "phishing",
-        "hack", "hacking", "malware",
+        "hacking", "malware",
         
         # Discrimination
-        "discriminate", "discrimination",
         "hate speech", "hateful",
-        "offensive", "derogatory",
+        "derogatory",
     ]
 
     # Image-specific inappropriate content
