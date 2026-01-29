@@ -82,16 +82,22 @@ Your role is to create engaging, scroll-stopping Instagram captions that:
 3. PROVIDE VALUE: Share useful information about the property or real estate tips
 4. INCLUDE CTA: End with a clear call-to-action
 5. USE EMOJIS: Strategically place emojis to break up text and add visual appeal
-6. OPTIMIZE HASHTAGS: Include relevant, high-performing real estate hashtags
+6. ALWAYS INCLUDE HASHTAGS: Include 20-30 relevant, high-performing real estate hashtags
+
+**CRITICAL REQUIREMENTS:**
+- Caption text MUST be 150 words or less (excluding hashtags)
+- ALWAYS include 20-30 hashtags at the end
+- Hashtags should be separated from caption by a blank line
 
 Caption Structure:
-- Hook (1-2 lines): Attention-grabbing opening
-- Body (3-5 lines): Property details, features, or story
-- CTA (1-2 lines): Encourage engagement or action
-- Hashtags: 20-30 relevant hashtags (mix of popular and niche)
+- Hook (1 line): Attention-grabbing opening with emoji
+- Body (2-3 lines): Key property highlights or value proposition
+- CTA (1 line): Clear call-to-action
+- Hashtags: 20-30 relevant hashtags (REQUIRED)
 
 Tone: Professional yet approachable, enthusiastic but not salesy.
-Focus on benefits and lifestyle, not just features."""
+Focus on benefits and lifestyle, not just features.
+Keep it concise - Instagram users prefer shorter, punchier captions."""
 
     async def generate(
         self,
@@ -106,7 +112,7 @@ Focus on benefits and lifestyle, not just features."""
             context: Optional context including image details
             
         Returns:
-            Instagram caption with hashtags
+            Instagram caption with hashtags (max 150 words + hashtags)
         """
         context = context or {}
 
@@ -116,9 +122,10 @@ Focus on benefits and lifestyle, not just features."""
         location = context.get("location", "")
         price = context.get("price", "")
         features = context.get("features", [])
+        caption_style = context.get("caption_style", "Professional")
 
-        # Build the generation prompt
-        generation_prompt = f"""Create an engaging Instagram caption for the following real estate content:
+        # Build the generation prompt with strict word limit
+        generation_prompt = f"""Create a SHORT, engaging Instagram caption for the following real estate content:
 
 **Content Description:** {prompt}
 
@@ -127,15 +134,23 @@ Focus on benefits and lifestyle, not just features."""
 {f"**Location:** {location}" if location else ""}
 {f"**Price:** {price}" if price else ""}
 {f"**Key Features:** {', '.join(features)}" if features else ""}
+{f"**Style:** {caption_style}" if caption_style else ""}
 
-Generate a caption that includes:
-1. An attention-grabbing hook (use emojis)
-2. Engaging body text highlighting key features/benefits
-3. A clear call-to-action
-4. 20-30 relevant hashtags (separated by spaces)
+**STRICT REQUIREMENTS:**
+1. Caption text MUST be 150 words or LESS (excluding hashtags)
+2. Start with an attention-grabbing hook (use 1-2 emojis)
+3. Include 2-3 sentences highlighting key benefits
+4. End with a clear call-to-action
+5. MUST include 20-30 relevant hashtags at the end
 
-Format the caption with proper line breaks for readability.
-Place hashtags at the end, separated from the main caption by a line break."""
+**FORMAT:**
+[Caption text - max 150 words]
+
+[Blank line]
+
+[20-30 hashtags separated by spaces]
+
+Keep it concise and punchy - Instagram users prefer shorter captions!"""
 
         try:
             response = await self.llm_client.generate(
@@ -147,12 +162,61 @@ Place hashtags at the end, separated from the main caption by a line break."""
             if "#" not in response:
                 hashtags = self._generate_hashtags(prompt, context)
                 response = f"{response}\n\n{hashtags}"
+            
+            # Validate and enforce word limit on caption (excluding hashtags)
+            response = self._enforce_word_limit(response, max_words=150)
 
             return response
 
         except Exception as e:
             logger.error(f"Instagram caption generation failed: {str(e)}")
             raise
+
+    def _enforce_word_limit(self, response: str, max_words: int = 150) -> str:
+        """
+        Enforce word limit on caption while preserving hashtags.
+        
+        Args:
+            response: Full response with caption and hashtags
+            max_words: Maximum words for caption (excluding hashtags)
+            
+        Returns:
+            Response with enforced word limit
+        """
+        # Split caption and hashtags
+        parts = response.split("\n\n")
+        
+        # Find hashtags section (contains #)
+        hashtag_section = ""
+        caption_parts = []
+        
+        for part in parts:
+            if "#" in part and part.count("#") > 5:  # Likely hashtag section
+                hashtag_section = part
+            else:
+                caption_parts.append(part)
+        
+        caption = "\n\n".join(caption_parts).strip()
+        
+        # Count words in caption (excluding hashtags)
+        words = caption.split()
+        
+        if len(words) > max_words:
+            # Truncate to max words and add ellipsis
+            truncated_words = words[:max_words]
+            caption = " ".join(truncated_words)
+            
+            # Ensure it ends properly (not mid-sentence if possible)
+            if not caption.endswith((".", "!", "?")):
+                caption = caption.rstrip(",;:-") + "..."
+            
+            logger.info(f"Caption truncated from {len(words)} to {max_words} words")
+        
+        # Ensure we have hashtags
+        if not hashtag_section:
+            hashtag_section = self._generate_hashtags(caption, {})
+        
+        return f"{caption}\n\n{hashtag_section}"
 
     async def generate_for_image(
         self,
