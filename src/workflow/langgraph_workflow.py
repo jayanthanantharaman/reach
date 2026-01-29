@@ -370,6 +370,8 @@ class REACHGraph:
 
     async def _instagram_node(self, state: GraphState) -> GraphState:
         """Execute Instagram post generation (image + caption)."""
+        import re
+        
         try:
             user_input = state["user_input"]
             context = state.get("context", {})
@@ -378,23 +380,34 @@ class REACHGraph:
             logger.info(f"Generating Instagram post for: {user_input}")
             
             # Step 1: Generate the image
-            image_result = None
+            image_data_uri = None
             try:
                 # Additional image safety check
+                should_generate_image = True
                 if self.guardrails:
                     image_check = await self.guardrails.validate_image_request(user_input)
                     if not image_check["passed"]:
-                        logger.warning(f"Image blocked by guardrails: {image_check['message']}")
-                    else:
-                        image_result = await self.image_generator.generate(
-                            f"Generate a photorealistic real estate image for Instagram: {user_input}",
-                            context={"style": "professional", "aspect_ratio": "1:1"},
-                        )
-                else:
+                        logger.warning(f"Image blocked by guardrails: {image_check.get('message', 'Unknown')}")
+                        should_generate_image = False
+                
+                if should_generate_image:
                     image_result = await self.image_generator.generate(
                         f"Generate a photorealistic real estate image for Instagram: {user_input}",
                         context={"style": "professional", "aspect_ratio": "1:1"},
                     )
+                    
+                    # Extract the data URI from the image result
+                    # The image generator returns a formatted string with "Image URL: data:image/..."
+                    if image_result:
+                        # Try to extract data URI from the result
+                        data_uri_match = re.search(r'(data:image/[^;\s]+;base64,[A-Za-z0-9+/=]+)', str(image_result))
+                        if data_uri_match:
+                            image_data_uri = data_uri_match.group(1)
+                        elif image_result.startswith("data:image"):
+                            image_data_uri = image_result
+                        else:
+                            logger.info(f"Image result format: {str(image_result)[:100]}...")
+                            
             except Exception as img_error:
                 logger.error(f"Image generation failed: {str(img_error)}")
                 # Continue without image
@@ -409,13 +422,13 @@ class REACHGraph:
                     caption_result = "Beautiful property! Contact us for more details. 🏠\n\n#realestate #property #home #dreamhome #realtor"
 
             # Combine image and caption into a formatted response
-            if image_result:
+            if image_data_uri:
                 # Format as a complete Instagram post with image
                 full_content = f"""## 📸 Instagram Post
 
 ### 🖼️ Generated Image
 
-![Instagram Image]({image_result})
+![Instagram Image]({image_data_uri})
 
 ### 📝 Caption
 
