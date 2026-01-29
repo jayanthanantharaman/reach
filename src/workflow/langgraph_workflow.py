@@ -369,29 +369,79 @@ class REACHGraph:
             }
 
     async def _instagram_node(self, state: GraphState) -> GraphState:
-        """Execute Instagram caption writer agent."""
+        """Execute Instagram post generation (image + caption)."""
         try:
             user_input = state["user_input"]
             context = state.get("context", {})
 
-            result = await self.instagram_writer.generate(user_input, context)
+            # Generate both image and caption for Instagram posts
+            logger.info(f"Generating Instagram post for: {user_input}")
+            
+            # Step 1: Generate the image
+            image_result = None
+            try:
+                # Additional image safety check
+                if self.guardrails:
+                    image_check = await self.guardrails.validate_image_request(user_input)
+                    if not image_check["passed"]:
+                        logger.warning(f"Image blocked by guardrails: {image_check['message']}")
+                    else:
+                        image_result = await self.image_generator.generate(
+                            f"Generate a photorealistic real estate image for Instagram: {user_input}",
+                            context={"style": "professional", "aspect_ratio": "1:1"},
+                        )
+                else:
+                    image_result = await self.image_generator.generate(
+                        f"Generate a photorealistic real estate image for Instagram: {user_input}",
+                        context={"style": "professional", "aspect_ratio": "1:1"},
+                    )
+            except Exception as img_error:
+                logger.error(f"Image generation failed: {str(img_error)}")
+                # Continue without image
 
-            # Validate output
+            # Step 2: Generate the caption with hashtags
+            caption_result = await self.instagram_writer.generate(user_input, context)
+
+            # Validate caption output
             if self.guardrails:
-                output_check = await self.guardrails.validate_output(result)
+                output_check = await self.guardrails.validate_output(caption_result)
                 if not output_check["passed"]:
-                    result = "I apologize, but I cannot provide that response. Please try a different query."
+                    caption_result = "Beautiful property! Contact us for more details. 🏠\n\n#realestate #property #home #dreamhome #realtor"
+
+            # Combine image and caption into a formatted response
+            if image_result:
+                # Format as a complete Instagram post with image
+                full_content = f"""## 📸 Instagram Post
+
+### 🖼️ Generated Image
+
+![Instagram Image]({image_result})
+
+### 📝 Caption
+
+{caption_result}
+"""
+            else:
+                # Caption only (image generation failed or was blocked)
+                full_content = f"""## 📸 Instagram Post
+
+### 📝 Caption
+
+{caption_result}
+
+*Note: Image generation was not available for this request.*
+"""
 
             return {
                 **state,
-                "generated_content": result,
+                "generated_content": full_content,
                 "content_type": "instagram",
             }
         except Exception as e:
-            logger.error(f"Instagram caption writing error: {str(e)}")
+            logger.error(f"Instagram post generation error: {str(e)}")
             return {
                 **state,
-                "error": f"Instagram caption writing failed: {str(e)}",
+                "error": f"Instagram post generation failed: {str(e)}",
             }
 
     async def _image_node(self, state: GraphState) -> GraphState:

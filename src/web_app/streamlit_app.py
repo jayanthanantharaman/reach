@@ -409,10 +409,12 @@ def render_chat_interface():
 
         # Generate response with streaming
         with st.chat_message("assistant"):
-            # Check if this is an image request (don't stream for images)
-            is_image_request = any(word in prompt.lower() for word in ["image", "picture", "photo", "generate image"])
+            # Check if this is an image or Instagram request (don't stream for these)
+            prompt_lower = prompt.lower()
+            is_image_request = any(word in prompt_lower for word in ["image", "picture", "photo", "generate image"])
+            is_instagram_request = any(word in prompt_lower for word in ["instagram", "ig post", "insta"])
             
-            if st.session_state.use_streaming and not is_image_request:
+            if st.session_state.use_streaming and not is_image_request and not is_instagram_request:
                 # Use streaming for text generation
                 try:
                     # Get metadata first (content type)
