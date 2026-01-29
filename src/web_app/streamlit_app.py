@@ -191,6 +191,37 @@ def render_sidebar():
                 st.caption(f"• {suggestion}")
 
 
+def render_copy_button(content: str, key: str):
+    """Render a copy button that copies content to clipboard."""
+    # Create a unique ID for this copy button
+    button_id = f"copy_btn_{key}"
+    
+    # JavaScript to copy text to clipboard
+    copy_js = f"""
+    <script>
+    function copyToClipboard_{key.replace('-', '_')}() {{
+        const text = {repr(content)};
+        navigator.clipboard.writeText(text).then(function() {{
+            const btn = document.getElementById('{button_id}');
+            btn.innerHTML = '✅ Copied!';
+            setTimeout(function() {{
+                btn.innerHTML = '📋 Copy';
+            }}, 2000);
+        }}).catch(function(err) {{
+            console.error('Failed to copy: ', err);
+        }});
+    }}
+    </script>
+    <button id="{button_id}" onclick="copyToClipboard_{key.replace('-', '_')}()" 
+            style="background-color: #262730; color: white; border: 1px solid #4a4a5a; 
+                   padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
+                   transition: background-color 0.2s;">
+        📋 Copy
+    </button>
+    """
+    st.markdown(copy_js, unsafe_allow_html=True)
+
+
 def render_chat_interface():
     """Render the main chat interface with streaming support."""
     logo_exists = LOGO_PATH.exists()
@@ -217,12 +248,25 @@ def render_chat_interface():
         st.session_state.use_streaming = True
 
     # Display chat messages
-    for message in st.session_state.messages:
+    for idx, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-            # Show content type badge if available
-            if message.get("content_type"):
+            # Show content type badge and copy button for assistant messages
+            if message["role"] == "assistant":
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    if message.get("content_type"):
+                        content_type = message['content_type']
+                        if content_type == "guardrails_blocked":
+                            st.caption("🛡️ Blocked by Guardrails")
+                        else:
+                            st.caption(f"📌 {content_type.title()}")
+                with col2:
+                    # Add copy button for assistant messages
+                    if message.get("content_type") != "guardrails_blocked":
+                        render_copy_button(message["content"], f"msg_{idx}")
+            elif message.get("content_type"):
                 content_type = message['content_type']
                 if content_type == "guardrails_blocked":
                     st.caption("🛡️ Blocked by Guardrails")
