@@ -646,10 +646,60 @@ def render_instagram_generator(key_prefix: str = "ig"):
                     if result.get("image"):
                         st.subheader("🖼️ Generated Image")
                         image_data = result["image"]
-                        if isinstance(image_data, str) and image_data.startswith("http"):
-                            st.image(image_data, use_column_width=True)
+                        
+                        # Handle different image data formats
+                        if isinstance(image_data, str):
+                            if image_data.startswith("http"):
+                                # URL - display directly
+                                st.image(image_data, use_container_width=True)
+                            elif image_data.startswith("data:image"):
+                                # Data URI (base64) - display directly
+                                st.image(image_data, use_container_width=True)
+                                
+                                # Add download button for base64 image
+                                # Extract the base64 data and mime type
+                                try:
+                                    header, b64_data = image_data.split(",", 1)
+                                    mime_type = header.split(":")[1].split(";")[0]
+                                    image_bytes = base64.b64decode(b64_data)
+                                    
+                                    st.download_button(
+                                        "📥 Download Image",
+                                        image_bytes,
+                                        f"generated_image.{mime_type.split('/')[-1]}",
+                                        mime_type,
+                                        key=f"{key_prefix}_download_image",
+                                    )
+                                except Exception as e:
+                                    st.caption(f"Could not prepare download: {e}")
+                            else:
+                                # Plain base64 string without data URI prefix
+                                try:
+                                    image_bytes = base64.b64decode(image_data)
+                                    st.image(image_bytes, use_container_width=True)
+                                    
+                                    st.download_button(
+                                        "📥 Download Image",
+                                        image_bytes,
+                                        "generated_image.png",
+                                        "image/png",
+                                        key=f"{key_prefix}_download_image",
+                                    )
+                                except Exception as e:
+                                    st.error(f"Could not display image: {e}")
+                                    st.code(str(image_data)[:200] + "..." if len(str(image_data)) > 200 else str(image_data))
+                        elif isinstance(image_data, bytes):
+                            # Raw bytes
+                            st.image(image_data, use_container_width=True)
+                            st.download_button(
+                                "📥 Download Image",
+                                image_data,
+                                "generated_image.png",
+                                "image/png",
+                                key=f"{key_prefix}_download_image",
+                            )
                         else:
-                            st.info("Image generated (base64 data available)")
+                            st.warning("Unknown image format")
                             st.code(str(image_data)[:200] + "..." if len(str(image_data)) > 200 else str(image_data))
 
                 with result_col2:
