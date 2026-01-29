@@ -3,14 +3,14 @@ Google Gemini Client for REACH.
 
 
 This module provides integration with Google's Gemini API for
-natural language understanding and generation.
+natural language understanding and generation using the new google-genai package.
 """
 
 import logging
 from typing import Any, Optional
 
-import google.generativeai as genai
-from google.generativeai.types import GenerationConfig
+from google import genai
+from google.genai import types
 
 from ..core.config import get_settings
 
@@ -26,14 +26,16 @@ class GeminiClient:
     - Conversation management
     - Error handling and retries
     - Token usage tracking
+    
+    Uses the new google-genai package (replacing deprecated google-generativeai).
     """
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         model: Optional[str] = None,
-        default_temperature: float = 0.7,
-        default_max_tokens: int = 4096,
+        default_temperature: Optional[float] = None,
+        default_max_tokens: Optional[int] = None,
     ):
         """
         Initialize the Gemini client.
@@ -47,10 +49,9 @@ class GeminiClient:
         settings = get_settings()
         self.api_key = api_key or settings.google_api_key
         self.model_name = model or settings.gemini_model
-        self.default_temperature = default_temperature
-        self.default_max_tokens = default_max_tokens
-        self._model = None
-        self._chat_session = None
+        self.default_temperature = default_temperature if default_temperature is not None else settings.gemini_temperature
+        self.default_max_tokens = default_max_tokens or settings.gemini_max_tokens
+        self._client = None
         self._initialized = False
 
         if self.api_key:
@@ -59,8 +60,7 @@ class GeminiClient:
     def _initialize(self) -> None:
         """Initialize the Gemini API client."""
         try:
-            genai.configure(api_key=self.api_key)
-            self._model = genai.GenerativeModel(self.model_name)
+            self._client = genai.Client(api_key=self.api_key)
             self._initialized = True
             logger.info(f"Gemini client initialized with model: {self.model_name}")
         except Exception as e:
@@ -102,31 +102,28 @@ class GeminiClient:
 
         try:
             # Build generation config
-            generation_config = GenerationConfig(
-                temperature=temperature or self.default_temperature,
+            generation_config = types.GenerateContentConfig(
+                temperature=temperature if temperature is not None else self.default_temperature,
                 max_output_tokens=max_tokens or self.default_max_tokens,
                 stop_sequences=stop_sequences,
+                system_instruction=system_prompt,
             )
 
-            # Combine system prompt with user prompt if provided
-            full_prompt = prompt
-            if system_prompt:
-                full_prompt = f"{system_prompt}\n\n{prompt}"
-
-            # Generate response
-            response = self._model.generate_content(
-                full_prompt,
-                generation_config=generation_config,
+            # Generate response using the new API
+            response = self._client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=generation_config,
             )
 
             # Extract content
             content = ""
-            if response.parts:
+            if response.text:
                 content = response.text
 
             # Get token usage if available
             tokens_used = None
-            if hasattr(response, "usage_metadata"):
+            if hasattr(response, "usage_metadata") and response.usage_metadata:
                 tokens_used = getattr(response.usage_metadata, "total_token_count", None)
 
             return {
@@ -134,7 +131,7 @@ class GeminiClient:
                 "model": self.model_name,
                 "tokens_used": tokens_used,
                 "metadata": {
-                    "finish_reason": getattr(response, "finish_reason", None),
+                    "finish_reason": self._get_finish_reason(response),
                     "safety_ratings": self._extract_safety_ratings(response),
                 },
             }
@@ -177,30 +174,30 @@ class GeminiClient:
 
         try:
             # Build generation config
-            generation_config = GenerationConfig(
-                temperature=temperature or self.default_temperature,
+            generation_config = types.GenerateContentConfig(
+                temperature=temperature if temperature is not None else self.default_temperature,
                 max_output_tokens=max_tokens or self.default_max_tokens,
+                system_instruction=system_prompt,
             )
 
-            # Create chat session with history
-            chat_history = self._format_history(history)
+            # Format history into contents
+            contents = self._format_history_as_contents(history)
+            
+            # Add current prompt
+            contents.append(types.Content(
+                role="user",
+                parts=[types.Part.from_text(prompt)],
+            ))
 
-            # Start chat with system instruction if provided
-            if system_prompt:
-                chat = self._model.start_chat(
-                    history=chat_history,
-                )
-            else:
-                chat = self._model.start_chat(history=chat_history)
-
-            # Send message
-            response = chat.send_message(
-                prompt,
-                generation_config=generation_config,
+            # Generate response
+            response = self._client.models.generate_content(
+                model=self.model_name,
+                contents=contents,
+                config=generation_config,
             )
 
             content = ""
-            if response.parts:
+            if response.text:
                 content = response.text
 
             return {
@@ -219,10 +216,10 @@ class GeminiClient:
                 "model": self.model_name,
             }
 
-    def _format_history(
+    def _format_history_as_contents(
         self,
         history: list[dict[str, str]],
-    ) -> list[dict[str, Any]]:
+    ) -> list[types.Content]:
         """
         Format conversation history for Gemini.
         
@@ -230,22 +227,41 @@ class GeminiClient:
             history: List of message dictionaries
             
         Returns:
-            Formatted history for Gemini
+            Formatted contents for Gemini
         """
-        formatted = []
+        contents = []
         for message in history:
             role = message.get("role", "user")
-            content = message.get("content", "")
+            content_text = message.get("content", "")
 
             # Map roles to Gemini format
             gemini_role = "user" if role == "user" else "model"
 
-            formatted.append({
-                "role": gemini_role,
-                "parts": [content],
-            })
+            contents.append(types.Content(
+                role=gemini_role,
+                parts=[types.Part.from_text(content_text)],
+            ))
 
-        return formatted
+        return contents
+
+    def _get_finish_reason(self, response: Any) -> Optional[str]:
+        """
+        Get finish reason from response.
+        
+        Args:
+            response: Gemini response object
+            
+        Returns:
+            Finish reason string or None
+        """
+        try:
+            if hasattr(response, "candidates") and response.candidates:
+                candidate = response.candidates[0]
+                if hasattr(candidate, "finish_reason"):
+                    return str(candidate.finish_reason)
+        except Exception:
+            pass
+        return None
 
     def _extract_safety_ratings(self, response: Any) -> list[dict[str, Any]]:
         """
@@ -258,14 +274,17 @@ class GeminiClient:
             List of safety rating dictionaries
         """
         ratings = []
-        if hasattr(response, "candidates") and response.candidates:
-            candidate = response.candidates[0]
-            if hasattr(candidate, "safety_ratings"):
-                for rating in candidate.safety_ratings:
-                    ratings.append({
-                        "category": str(rating.category),
-                        "probability": str(rating.probability),
-                    })
+        try:
+            if hasattr(response, "candidates") and response.candidates:
+                candidate = response.candidates[0]
+                if hasattr(candidate, "safety_ratings") and candidate.safety_ratings:
+                    for rating in candidate.safety_ratings:
+                        ratings.append({
+                            "category": str(rating.category) if hasattr(rating, "category") else "unknown",
+                            "probability": str(rating.probability) if hasattr(rating, "probability") else "unknown",
+                        })
+        except Exception as e:
+            logger.debug(f"Could not extract safety ratings: {e}")
         return ratings
 
     async def count_tokens(self, text: str) -> int:
@@ -283,7 +302,10 @@ class GeminiClient:
             return len(text) // 4
 
         try:
-            result = self._model.count_tokens(text)
+            result = self._client.models.count_tokens(
+                model=self.model_name,
+                contents=text,
+            )
             return result.total_tokens
         except Exception as e:
             logger.warning(f"Token counting error: {str(e)}")

@@ -634,8 +634,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - [LangGraph](https://github.com/langchain-ai/langgraph) for multi-agent orchestration
-- [Google Gemini](https://ai.google.dev/) for language model capabilities
-- [Google Imagen](https://cloud.google.com/vertex-ai/docs/generative-ai/image/overview) for image generation
+- [Google GenAI](https://ai.google.dev/) for Gemini language model and Imagen image generation
 - [NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails) for content safety
 - [SERP API](https://serpapi.com/) for web research
 - [Streamlit](https://streamlit.io/) for the web interface
