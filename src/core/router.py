@@ -19,6 +19,7 @@ class ContentType(str, Enum):
     RESEARCH = "research"
     BLOG = "blog"
     LINKEDIN = "linkedin"
+    INSTAGRAM = "instagram"
     IMAGE = "image"
     STRATEGY = "strategy"
     GENERAL = "general"
@@ -49,7 +50,22 @@ class ContentRouter:
     """
 
     # Keywords associated with each content type
+    # Note: Order matters - more specific types should be checked first
     CONTENT_KEYWORDS: dict[ContentType, list[str]] = {
+        ContentType.INSTAGRAM: [
+            "instagram",
+            "instagram post",
+            "instagram caption",
+            "ig post",
+            "ig caption",
+            "insta",
+            "insta post",
+            "hashtag",
+            "hashtags",
+            "caption",
+            "reel",
+            "story",
+        ],
         ContentType.RESEARCH: [
             "research",
             "find",
@@ -75,9 +91,6 @@ class ContentRouter:
         ContentType.BLOG: [
             "blog",
             "article",
-            "post",
-            "write",
-            "content",
             "seo",
             "long-form",
             "guide",
@@ -96,8 +109,6 @@ class ContentRouter:
             "career",
             "business post",
             "thought leadership",
-            "engagement",
-            "social media",
             "professional network",
             "b2b",
             "corporate",
@@ -133,7 +144,15 @@ class ContentRouter:
     }
 
     # Patterns for more specific intent detection
+    # Note: Instagram patterns are checked first for priority
     INTENT_PATTERNS: dict[ContentType, list[str]] = {
+        ContentType.INSTAGRAM: [
+            r"(?:create|write|generate|make) (?:a |an )?(?:instagram|ig|insta) (?:post|caption|content)\s*.*",
+            r"instagram (?:post|caption|content) (?:for|about|to)\s+.+",
+            r"(?:create|write|generate) (?:a |an )?(?:caption|post) (?:for|with) (?:instagram|ig)\s*.*",
+            r"(?:photorealistic |photo realistic )?instagram\s+.+",
+            r"ig (?:post|caption)\s+.+",
+        ],
         ContentType.RESEARCH: [
             r"(?:can you |please )?(?:research|find|look up|search for)\s+.+",
             r"what (?:is|are|does|do)\s+.+",
@@ -141,7 +160,7 @@ class ContentRouter:
             r"i (?:want|need) (?:to know|information) about\s+.+",
         ],
         ContentType.BLOG: [
-            r"(?:write|create|generate) (?:a |an )?(?:blog|article|post)\s+.+",
+            r"(?:write|create|generate) (?:a |an )?(?:blog|article)\s+.+",
             r"(?:blog|article) (?:about|on)\s+.+",
             r"seo (?:content|article|blog)\s+.+",
         ],
@@ -342,15 +361,18 @@ class ContentRouter:
             ContentType.RESEARCH: [
                 ContentType.BLOG,
                 ContentType.LINKEDIN,
+                ContentType.INSTAGRAM,
                 ContentType.IMAGE,
             ],
-            ContentType.BLOG: [ContentType.LINKEDIN, ContentType.IMAGE],
-            ContentType.LINKEDIN: [ContentType.IMAGE],
+            ContentType.BLOG: [ContentType.LINKEDIN, ContentType.INSTAGRAM, ContentType.IMAGE],
+            ContentType.LINKEDIN: [ContentType.INSTAGRAM, ContentType.IMAGE],
+            ContentType.INSTAGRAM: [ContentType.IMAGE],
             ContentType.IMAGE: [],
             ContentType.STRATEGY: [
                 ContentType.RESEARCH,
                 ContentType.BLOG,
                 ContentType.LINKEDIN,
+                ContentType.INSTAGRAM,
             ],
             ContentType.GENERAL: [ContentType.RESEARCH],
         }
@@ -370,6 +392,7 @@ class ContentRouter:
             ContentType.RESEARCH: "research_agent",
             ContentType.BLOG: "blog_writer_agent",
             ContentType.LINKEDIN: "linkedin_writer_agent",
+            ContentType.INSTAGRAM: "instagram_writer_agent",
             ContentType.IMAGE: "image_generator_agent",
             ContentType.STRATEGY: "content_strategist_agent",
             ContentType.GENERAL: "query_handler_agent",
