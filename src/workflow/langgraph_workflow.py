@@ -726,6 +726,130 @@ class REACHGraph:
                 "guardrails": {"blocked": False},
             }
 
+    def run_stream(
+        self,
+        user_input: str,
+        session_id: Optional[str] = None,
+        context: Optional[dict[str, Any]] = None,
+    ):
+        """
+        Run the content creation workflow with streaming output.
+        
+        This is a synchronous generator that yields text chunks as they are generated.
+        It bypasses the full LangGraph workflow for direct streaming from the LLM.
+        
+        Args:
+            user_input: User's request
+            session_id: Optional session ID for conversation continuity
+            context: Optional additional context
+            
+        Yields:
+            Text chunks as they are generated
+        """
+        # Get or create session
+        session = self.session_manager.get_or_create_session(
+            session_id or "default",
+            initial_context=context,
+        )
+
+        # Add user message to history
+        session.add_message("user", user_input)
+
+        # Route the request to determine content type
+        try:
+            route_decision = self.router.route(
+                user_input,
+                conversation_history=session.get_history(limit=10),
+            )
+            content_type = route_decision.content_type.value if hasattr(route_decision.content_type, "value") else str(route_decision.content_type)
+        except Exception as e:
+            logger.error(f"Routing error in streaming: {str(e)}")
+            content_type = "general"
+
+        # Get the appropriate system prompt based on content type
+        system_prompts = {
+            "blog": """You are an expert SEO content writer specializing in real estate. 
+Create engaging, informative blog posts optimized for search engines. 
+Use proper headings, include keywords naturally, and provide valuable information.""",
+            "linkedin": """You are an expert LinkedIn content creator for real estate professionals.
+Create engaging, professional posts that drive engagement and showcase expertise.""",
+            "instagram": """You are an Instagram content expert for real estate.
+Create engaging captions with relevant hashtags for property posts.""",
+            "research": """You are a research analyst specializing in real estate.
+Provide comprehensive, well-researched information with key insights.""",
+            "strategy": """You are a content strategist for real estate marketing.
+Create actionable content strategies and marketing plans.""",
+            "general": """You are REACH, an AI assistant for real estate content creation.
+Help users create high-quality real estate marketing content.""",
+        }
+
+        system_prompt = system_prompts.get(content_type, system_prompts["general"])
+
+        # Stream the response
+        full_content = ""
+        try:
+            for chunk in self.gemini_client.generate_stream(
+                prompt=user_input,
+                system_prompt=system_prompt,
+            ):
+                full_content += chunk
+                yield chunk
+
+            # Store the complete content in session
+            if full_content:
+                session.store_content(content_type, full_content)
+                session.add_message("assistant", full_content)
+
+        except Exception as e:
+            logger.error(f"Streaming error: {str(e)}")
+            error_msg = f"Error generating content: {str(e)}"
+            yield error_msg
+
+    def get_streaming_metadata(
+        self,
+        user_input: str,
+        session_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """
+        Get metadata for a streaming request without generating content.
+        
+        This is useful for getting the content type and other metadata
+        before starting the streaming process.
+        
+        Args:
+            user_input: User's request
+            session_id: Optional session ID
+            
+        Returns:
+            Dictionary with routing metadata
+        """
+        # Get or create session
+        session = self.session_manager.get_or_create_session(
+            session_id or "default",
+        )
+
+        # Route the request
+        try:
+            route_decision = self.router.route(
+                user_input,
+                conversation_history=session.get_history(limit=10),
+            )
+            content_type = route_decision.content_type.value if hasattr(route_decision.content_type, "value") else str(route_decision.content_type)
+            
+            return {
+                "content_type": content_type,
+                "confidence": route_decision.confidence,
+                "session_id": session.conversation_id,
+            }
+        except Exception as e:
+            logger.error(f"Metadata error: {str(e)}")
+            return {
+                "content_type": "general",
+                "confidence": 0.5,
+                "session_id": session.conversation_id if session else None,
+                "error": str(e),
+            }
+
     async def generate_instagram_caption(
         self,
         content_description: str,

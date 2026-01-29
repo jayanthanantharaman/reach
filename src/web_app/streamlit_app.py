@@ -167,6 +167,11 @@ def render_sidebar():
 
         # Settings
         st.subheader("Settings")
+        st.session_state.use_streaming = st.checkbox(
+            "🚀 Enable Streaming",
+            value=st.session_state.get("use_streaming", True),
+            help="Stream text as it's generated for a more interactive experience",
+        )
         st.session_state.show_analysis = st.checkbox(
             "Show Content Analysis",
             value=True,
@@ -187,7 +192,7 @@ def render_sidebar():
 
 
 def render_chat_interface():
-    """Render the main chat interface."""
+    """Render the main chat interface with streaming support."""
     logo_exists = LOGO_PATH.exists()
     if logo_exists:
         logo_uri = _logo_data_uri(LOGO_PATH)
@@ -206,6 +211,10 @@ def render_chat_interface():
     else:
         st.title("Ask REACH")
     st.caption("Create property listings, blogs, LinkedIn posts, and more!")
+
+    # Streaming toggle in sidebar
+    if "use_streaming" not in st.session_state:
+        st.session_state.use_streaming = True
 
     # Display chat messages
     for message in st.session_state.messages:
@@ -246,56 +255,108 @@ def render_chat_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Generate response
+        # Generate response with streaming
         with st.chat_message("assistant"):
-            with st.spinner("Creating content..."):
-                result = run_async(
-                    st.session_state.graph.run(
+            # Check if this is an image request (don't stream for images)
+            is_image_request = any(word in prompt.lower() for word in ["image", "picture", "photo", "generate image"])
+            
+            if st.session_state.use_streaming and not is_image_request:
+                # Use streaming for text generation
+                try:
+                    # Get metadata first (content type)
+                    metadata = st.session_state.graph.get_streaming_metadata(
                         prompt,
                         session_id=st.session_state.session_id,
                     )
-                )
-
-                content = result.get("content", "")
-                content_type = result.get("content_type", "general")
-                guardrails = result.get("guardrails", {})
-
-                if guardrails.get("blocked"):
-                    # Show guardrails blocked message
-                    st.warning(content)
-                    st.caption(f"🛡️ Blocked by: {guardrails.get('blocked_by', 'guardrails').title()}")
-
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": content,
-                        "content_type": "guardrails_blocked",
-                    })
-                elif result["success"]:
-                    st.markdown(content)
+                    content_type = metadata.get("content_type", "general")
+                    
+                    # Stream the response
+                    response_placeholder = st.empty()
+                    full_content = ""
+                    
+                    for chunk in st.session_state.graph.run_stream(
+                        prompt,
+                        session_id=st.session_state.session_id,
+                    ):
+                        full_content += chunk
+                        response_placeholder.markdown(full_content + "▌")
+                    
+                    # Final update without cursor
+                    response_placeholder.markdown(full_content)
                     st.caption(f"📌 {content_type.title()}")
-
+                    
                     # Store in session
                     st.session_state.messages.append({
                         "role": "assistant",
-                        "content": content,
+                        "content": full_content,
                         "content_type": content_type,
                     })
-
+                    
                     # Store generated content
                     if content_type not in st.session_state.generated_content:
                         st.session_state.generated_content[content_type] = []
-                    st.session_state.generated_content[content_type].append(content)
-
+                    st.session_state.generated_content[content_type].append(full_content)
+                    
                     # Show analysis if enabled
                     if st.session_state.show_analysis and content_type in ["blog", "linkedin", "instagram"]:
-                        render_content_analysis(content, content_type)
-                else:
-                    error_msg = f"❌ Error: {result.get('error', 'Unknown error')}"
-                    st.error(error_msg)
+                        render_content_analysis(full_content, content_type)
+                        
+                except Exception as e:
+                    st.error(f"❌ Streaming error: {str(e)}")
                     st.session_state.messages.append({
                         "role": "assistant",
-                        "content": error_msg,
+                        "content": f"Error: {str(e)}",
                     })
+            else:
+                # Use non-streaming for images or when streaming is disabled
+                with st.spinner("Creating content..."):
+                    result = run_async(
+                        st.session_state.graph.run(
+                            prompt,
+                            session_id=st.session_state.session_id,
+                        )
+                    )
+
+                    content = result.get("content", "")
+                    content_type = result.get("content_type", "general")
+                    guardrails = result.get("guardrails", {})
+
+                    if guardrails.get("blocked"):
+                        # Show guardrails blocked message
+                        st.warning(content)
+                        st.caption(f"🛡️ Blocked by: {guardrails.get('blocked_by', 'guardrails').title()}")
+
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": content,
+                            "content_type": "guardrails_blocked",
+                        })
+                    elif result["success"]:
+                        st.markdown(content)
+                        st.caption(f"📌 {content_type.title()}")
+
+                        # Store in session
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": content,
+                            "content_type": content_type,
+                        })
+
+                        # Store generated content
+                        if content_type not in st.session_state.generated_content:
+                            st.session_state.generated_content[content_type] = []
+                        st.session_state.generated_content[content_type].append(content)
+
+                        # Show analysis if enabled
+                        if st.session_state.show_analysis and content_type in ["blog", "linkedin", "instagram"]:
+                            render_content_analysis(content, content_type)
+                    else:
+                        error_msg = f"❌ Error: {result.get('error', 'Unknown error')}"
+                        st.error(error_msg)
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": error_msg,
+                        })
 
 
 def render_content_analysis(content: str, content_type: str):

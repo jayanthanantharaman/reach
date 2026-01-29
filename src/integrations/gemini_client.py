@@ -325,6 +325,107 @@ class GeminiClient:
             "default_max_tokens": self.default_max_tokens,
         }
 
+    def generate_stream(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        stop_sequences: Optional[list[str]] = None,
+    ):
+        """
+        Generate text using Gemini with streaming.
+        
+        This is a synchronous generator that yields text chunks as they are generated.
+        
+        Args:
+            prompt: User prompt
+            system_prompt: Optional system instruction
+            temperature: Generation temperature
+            max_tokens: Maximum tokens to generate
+            stop_sequences: Optional stop sequences
+            
+        Yields:
+            Text chunks as they are generated
+        """
+        if not self._initialized:
+            yield ""
+            return
+
+        try:
+            # Build generation config
+            generation_config = types.GenerateContentConfig(
+                temperature=temperature if temperature is not None else self.default_temperature,
+                max_output_tokens=max_tokens or self.default_max_tokens,
+                stop_sequences=stop_sequences,
+                system_instruction=system_prompt,
+            )
+
+            # Generate response with streaming using the new API
+            response_stream = self._client.models.generate_content_stream(
+                model=self.model_name,
+                contents=prompt,
+                config=generation_config,
+            )
+
+            # Yield text chunks as they arrive
+            for chunk in response_stream:
+                if chunk.text:
+                    yield chunk.text
+
+        except Exception as e:
+            logger.error(f"Gemini streaming error: {str(e)}")
+            yield f"Error: {str(e)}"
+
+    async def generate_stream_async(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        stop_sequences: Optional[list[str]] = None,
+    ):
+        """
+        Generate text using Gemini with async streaming.
+        
+        This is an async generator that yields text chunks as they are generated.
+        
+        Args:
+            prompt: User prompt
+            system_prompt: Optional system instruction
+            temperature: Generation temperature
+            max_tokens: Maximum tokens to generate
+            stop_sequences: Optional stop sequences
+            
+        Yields:
+            Text chunks as they are generated
+        """
+        if not self._initialized:
+            yield ""
+            return
+
+        try:
+            # Build generation config
+            generation_config = types.GenerateContentConfig(
+                temperature=temperature if temperature is not None else self.default_temperature,
+                max_output_tokens=max_tokens or self.default_max_tokens,
+                stop_sequences=stop_sequences,
+                system_instruction=system_prompt,
+            )
+
+            # Generate response with async streaming
+            async for chunk in await self._client.aio.models.generate_content_stream(
+                model=self.model_name,
+                contents=prompt,
+                config=generation_config,
+            ):
+                if chunk.text:
+                    yield chunk.text
+
+        except Exception as e:
+            logger.error(f"Gemini async streaming error: {str(e)}")
+            yield f"Error: {str(e)}"
+
     async def test_connection(self) -> bool:
         """
         Test the API connection.
