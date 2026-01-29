@@ -229,7 +229,7 @@ def render_content_with_images(content: str, key_prefix: str = ""):
     if content_stripped.startswith("data:image/"):
         # This is a raw image data URI - render it directly
         try:
-            st.image(content_stripped, caption="Generated Image", use_container_width=True)
+            st.image(content_stripped, caption="Generated Image", width="stretch")
             
             # Add download button
             header, b64_data = content_stripped.split(",", 1)
@@ -263,7 +263,7 @@ def render_content_with_images(content: str, key_prefix: str = ""):
         
         # Render the image
         try:
-            st.image(image_data, caption="Generated Image", use_container_width=True)
+            st.image(image_data, caption="Generated Image", width="stretch")
             
             # Add download button
             header, b64_data = image_data.split(",", 1)
@@ -325,7 +325,7 @@ def render_content_with_images(content: str, key_prefix: str = ""):
         # Render the image
         try:
             # Streamlit can display data URIs directly
-            st.image(image_data, caption=alt_text if alt_text else "Generated Image", use_container_width=True)
+            st.image(image_data, caption=alt_text if alt_text else "Generated Image", width="stretch")
             
             # Add download button
             if "," in image_data:
@@ -761,10 +761,10 @@ def render_instagram_generator(key_prefix: str = "ig"):
                         if isinstance(image_data, str):
                             if image_data.startswith("http"):
                                 # URL - display directly
-                                st.image(image_data, use_container_width=True)
+                                st.image(image_data, width="stretch")
                             elif image_data.startswith("data:image"):
                                 # Data URI (base64) - display directly
-                                st.image(image_data, use_container_width=True)
+                                st.image(image_data, width="stretch")
                                 
                                 # Add download button for base64 image
                                 # Extract the base64 data and mime type
@@ -786,7 +786,7 @@ def render_instagram_generator(key_prefix: str = "ig"):
                                 # Plain base64 string without data URI prefix
                                 try:
                                     image_bytes = base64.b64decode(image_data)
-                                    st.image(image_bytes, use_container_width=True)
+                                    st.image(image_bytes, width="stretch")
                                     
                                     st.download_button(
                                         "📥 Download Image",
@@ -800,7 +800,7 @@ def render_instagram_generator(key_prefix: str = "ig"):
                                     st.code(str(image_data)[:200] + "..." if len(str(image_data)) > 200 else str(image_data))
                         elif isinstance(image_data, bytes):
                             # Raw bytes
-                            st.image(image_data, use_container_width=True)
+                            st.image(image_data, width="stretch")
                             st.download_button(
                                 "📥 Download Image",
                                 image_data,
