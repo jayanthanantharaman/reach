@@ -358,22 +358,42 @@ Always write in a {tone} tone appropriate for the target audience."""
         
         Args:
             blog_content: Original blog content
-            image_result: Image generation result
+            image_result: Image generation result (may be base64 data URI or URL)
             
         Returns:
-            Blog content with image inserted
+            Blog content with image inserted as markdown image
         """
-        # Create image section
-        image_section = f"""
+        # Check if image_result is a data URI or URL
+        if image_result and isinstance(image_result, str):
+            if image_result.startswith("data:image") or image_result.startswith("http"):
+                # Create proper markdown image syntax
+                image_section = f"""
 ---
 
 ## 📸 Featured Image
 
-{image_result}
+![Featured Image]({image_result})
 
 ---
 
 """
+            else:
+                # If it's some other format, try to display as-is but note it
+                image_section = f"""
+---
+
+## 📸 Featured Image
+
+*Image generated - see below*
+
+![Featured Image]({image_result})
+
+---
+
+"""
+        else:
+            # No valid image result
+            return blog_content
 
         # Find the best place to insert the image (after title and meta description)
         lines = blog_content.split("\n")

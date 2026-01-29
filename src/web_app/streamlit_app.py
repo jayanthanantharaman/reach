@@ -239,6 +239,77 @@ def render_copy_button(content: str, key: str):
     st.markdown(copy_js, unsafe_allow_html=True)
 
 
+def render_content_with_images(content: str, key_prefix: str = ""):
+    """
+    Render content that may contain embedded base64 images.
+    
+    Streamlit's st.markdown() doesn't render base64 data URI images,
+    so we need to extract them and render separately with st.image().
+    
+    Args:
+        content: Content that may contain markdown images with base64 data
+        key_prefix: Prefix for unique keys
+    """
+    import re
+    
+    # Pattern to match markdown images with data URIs
+    # ![alt text](data:image/...;base64,...)
+    image_pattern = r'!\[([^\]]*)\]\((data:image/[^;]+;base64,[^)]+)\)'
+    
+    # Find all images
+    images = re.findall(image_pattern, content)
+    
+    if not images:
+        # No embedded images, render as normal markdown
+        st.markdown(content)
+        return
+    
+    # Split content by images and render each part
+    parts = re.split(image_pattern, content)
+    
+    # parts will be: [text, alt1, data1, text, alt2, data2, ...]
+    i = 0
+    img_idx = 0
+    while i < len(parts):
+        part = parts[i]
+        
+        # Check if this is an alt text (followed by image data)
+        if i + 1 < len(parts) and parts[i + 1].startswith("data:image"):
+            # This is alt text, next is image data
+            alt_text = part if part else "Generated Image"
+            image_data = parts[i + 1]
+            
+            # Render any text before this image
+            # (handled in previous iteration)
+            
+            # Render the image
+            try:
+                st.image(image_data, caption=alt_text, use_container_width=True)
+                
+                # Add download button
+                header, b64_data = image_data.split(",", 1)
+                mime_type = header.split(":")[1].split(";")[0]
+                image_bytes = base64.b64decode(b64_data)
+                
+                st.download_button(
+                    "📥 Download Image",
+                    image_bytes,
+                    f"image_{img_idx}.{mime_type.split('/')[-1]}",
+                    mime_type,
+                    key=f"{key_prefix}_img_download_{img_idx}",
+                )
+            except Exception as e:
+                st.warning(f"Could not display image: {e}")
+            
+            img_idx += 1
+            i += 2  # Skip alt and data
+        else:
+            # Regular text content
+            if part.strip():
+                st.markdown(part)
+            i += 1
+
+
 def render_chat_interface():
     """Render the main chat interface with streaming support."""
     logo_exists = LOGO_PATH.exists()
@@ -267,7 +338,8 @@ def render_chat_interface():
     # Display chat messages
     for idx, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            # Use special rendering for content that may have embedded images
+            render_content_with_images(message["content"], f"chat_{idx}")
 
             # Show content type badge and copy button for assistant messages
             if message["role"] == "assistant":
