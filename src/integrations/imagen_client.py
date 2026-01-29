@@ -30,7 +30,7 @@ class ImagenClient:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "imagen-3.0-generate-002",
+        model: str = "imagen-4.0-generate-001",
     ):
         """
         Initialize the Imagen client.
@@ -65,7 +65,7 @@ class ImagenClient:
         negative_prompt: Optional[str] = None,
         aspect_ratio: str = "1:1",
         number_of_images: int = 1,
-        safety_filter_level: str = "block_some",
+        safety_filter_level: str = "block_low_and_above",
         person_generation: str = "allow_adult",
     ) -> dict[str, Any]:
         """
@@ -90,11 +90,19 @@ class ImagenClient:
             }
 
         try:
+            safety_level = safety_filter_level
+            if safety_level != "block_low_and_above":
+                logger.warning(
+                    "Unsupported safety_filter_level '%s'; falling back to 'block_low_and_above'.",
+                    safety_level,
+                )
+                safety_level = "block_low_and_above"
+
             # Build the image generation config
             config = types.GenerateImagesConfig(
                 number_of_images=number_of_images,
                 aspect_ratio=aspect_ratio,
-                safety_filter_level=safety_filter_level,
+                safety_filter_level=safety_level,
                 person_generation=person_generation,
                 negative_prompt=negative_prompt,
             )

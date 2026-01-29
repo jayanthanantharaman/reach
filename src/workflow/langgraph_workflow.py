@@ -199,22 +199,21 @@ class REACHGraph:
         if not route:
             return "general"
 
-        agent_type = route.agent_type.lower()
+        content_type = route.content_type.value if hasattr(route.content_type, "value") else str(route.content_type)
 
-        if "research" in agent_type:
+        if content_type == "research":
             return "research"
-        elif "blog" in agent_type:
+        if content_type == "blog":
             return "blog"
-        elif "linkedin" in agent_type:
+        if content_type == "linkedin":
             return "linkedin"
-        elif "instagram" in agent_type or "caption" in agent_type:
+        if content_type == "instagram":
             return "instagram"
-        elif "image" in agent_type:
+        if content_type == "image":
             return "image"
-        elif "strateg" in agent_type:
+        if content_type == "strategy":
             return "strategy"
-        else:
-            return "general"
+        return "general"
 
     async def _guardrails_node(self, state: GraphState) -> GraphState:
         """
@@ -270,7 +269,10 @@ class REACHGraph:
             user_input = state["user_input"]
             history = state.get("conversation_history", [])
 
-            route_decision = await self.router.route(user_input, history)
+            route_decision = self.router.route(
+                user_input,
+                conversation_history=history,
+            )
 
             return {
                 **state,
