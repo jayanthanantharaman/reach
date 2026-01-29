@@ -246,11 +246,78 @@ def render_content_with_images(content: str, key_prefix: str = ""):
     Streamlit's st.markdown() doesn't render base64 data URI images,
     so we need to extract them and render separately with st.image().
     
+    Handles:
+    1. Markdown images: ![alt](data:image/...;base64,...)
+    2. Raw data URIs: data:image/png;base64,...
+    3. Image URL text: Image URL: data:image/...
+    
     Args:
         content: Content that may contain markdown images with base64 data
         key_prefix: Prefix for unique keys
     """
     import re
+    
+    # Check if content is primarily a raw data URI (image generation result)
+    content_stripped = content.strip()
+    if content_stripped.startswith("data:image/"):
+        # This is a raw image data URI - render it directly
+        try:
+            st.image(content_stripped, caption="Generated Image", use_container_width=True)
+            
+            # Add download button
+            header, b64_data = content_stripped.split(",", 1)
+            mime_type = header.split(":")[1].split(";")[0]
+            image_bytes = base64.b64decode(b64_data)
+            
+            st.download_button(
+                "📥 Download Image",
+                image_bytes,
+                f"generated_image.{mime_type.split('/')[-1]}",
+                mime_type,
+                key=f"{key_prefix}_raw_img_download",
+            )
+        except Exception as e:
+            st.error(f"Could not display image: {e}")
+            st.code(content_stripped[:200] + "..." if len(content_stripped) > 200 else content_stripped)
+        return
+    
+    # Check for "Image URL: data:image/..." pattern
+    image_url_pattern = r'Image URL:\s*(data:image/[^;\s]+;base64,[A-Za-z0-9+/=]+)'
+    image_url_match = re.search(image_url_pattern, content)
+    
+    if image_url_match:
+        # Extract the image data and render it
+        image_data = image_url_match.group(1)
+        
+        # Render text before the image URL
+        text_before = content[:image_url_match.start()].strip()
+        if text_before:
+            st.markdown(text_before)
+        
+        # Render the image
+        try:
+            st.image(image_data, caption="Generated Image", use_container_width=True)
+            
+            # Add download button
+            header, b64_data = image_data.split(",", 1)
+            mime_type = header.split(":")[1].split(";")[0]
+            image_bytes = base64.b64decode(b64_data)
+            
+            st.download_button(
+                "📥 Download Image",
+                image_bytes,
+                f"generated_image.{mime_type.split('/')[-1]}",
+                mime_type,
+                key=f"{key_prefix}_url_img_download",
+            )
+        except Exception as e:
+            st.warning(f"Could not display image: {e}")
+        
+        # Render text after the image URL
+        text_after = content[image_url_match.end():].strip()
+        if text_after:
+            st.markdown(text_after)
+        return
     
     # Pattern to match markdown images with data URIs
     # ![alt text](data:image/...;base64,...)
@@ -468,7 +535,8 @@ def render_chat_interface():
                             "content_type": "guardrails_blocked",
                         })
                     elif result["success"]:
-                        st.markdown(content)
+                        # Use special rendering for content that may have images
+                        render_content_with_images(content, f"response_{len(st.session_state.messages)}")
                         st.caption(f"📌 {content_type.title()}")
 
                         # Store in session
