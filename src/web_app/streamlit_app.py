@@ -287,8 +287,9 @@ def render_content_with_images(content: str, key_prefix: str = ""):
         return
     
     # Pattern to match markdown images with data URIs
-    # ![alt text](data:image/...;base64,...)
-    image_pattern = r'!\[([^\]]*)\]\((data:image/[^;]+;base64,[^)]+)\)'
+    # ![alt text](data:image/...;base64,...) - capture everything until closing paren
+    # Use a more robust pattern that handles the full base64 string
+    image_pattern = r'!\[([^\]]*)\]\((data:image/[^;]+;base64,[A-Za-z0-9+/=]+)\)'
     
     # Find all images
     images = re.findall(image_pattern, content)
@@ -298,31 +299,44 @@ def render_content_with_images(content: str, key_prefix: str = ""):
         st.markdown(content)
         return
     
-    # Split content by images and render each part
-    parts = re.split(image_pattern, content)
-    
-    # parts will be: [text, alt1, data1, text, alt2, data2, ...]
-    i = 0
+    # Process content with images
+    remaining_content = content
     img_idx = 0
-    while i < len(parts):
-        part = parts[i]
+    
+    for alt_text, image_data in images:
+        # Find the position of this image in the remaining content
+        full_match = f"![{alt_text}]({image_data})"
+        match_pos = remaining_content.find(full_match)
         
-        # Check if this is an alt text (followed by image data)
-        if i + 1 < len(parts) and parts[i + 1].startswith("data:image"):
-            # This is alt text, next is image data
-            alt_text = part if part else "Generated Image"
-            image_data = parts[i + 1]
+        if match_pos == -1:
+            # Try to find with regex if exact match fails
+            match = re.search(r'!\[' + re.escape(alt_text) + r'\]\(data:image/[^;]+;base64,[A-Za-z0-9+/=]+\)', remaining_content)
+            if match:
+                match_pos = match.start()
+                full_match = match.group(0)
+            else:
+                continue
+        
+        # Render text before the image
+        text_before = remaining_content[:match_pos].strip()
+        if text_before:
+            st.markdown(text_before)
+        
+        # Render the image
+        try:
+            # Streamlit can display data URIs directly
+            st.image(image_data, caption=alt_text if alt_text else "Generated Image", use_container_width=True)
             
-            # Render any text before this image
-            # (handled in previous iteration)
-            
-            # Render the image
-            try:
-                st.image(image_data, caption=alt_text, use_container_width=True)
-                
-                # Add download button
+            # Add download button
+            if "," in image_data:
                 header, b64_data = image_data.split(",", 1)
                 mime_type = header.split(":")[1].split(";")[0]
+                
+                # Fix padding if needed
+                padding_needed = len(b64_data) % 4
+                if padding_needed:
+                    b64_data += "=" * (4 - padding_needed)
+                
                 image_bytes = base64.b64decode(b64_data)
                 
                 st.download_button(
@@ -332,16 +346,18 @@ def render_content_with_images(content: str, key_prefix: str = ""):
                     mime_type,
                     key=f"{key_prefix}_img_download_{img_idx}",
                 )
-            except Exception as e:
-                st.warning(f"Could not display image: {e}")
-            
-            img_idx += 1
-            i += 2  # Skip alt and data
-        else:
-            # Regular text content
-            if part.strip():
-                st.markdown(part)
-            i += 1
+        except Exception as e:
+            st.warning(f"Could not display image: {e}")
+            # Show a truncated version of the data for debugging
+            st.caption(f"Image data length: {len(image_data)} chars")
+        
+        # Update remaining content
+        remaining_content = remaining_content[match_pos + len(full_match):]
+        img_idx += 1
+    
+    # Render any remaining text after the last image
+    if remaining_content.strip():
+        st.markdown(remaining_content.strip())
 
 
 def render_chat_interface():
