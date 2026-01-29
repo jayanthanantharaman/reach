@@ -229,13 +229,20 @@ Provide ONLY the optimized prompt, no explanation."""
                         else:
                             image_url = image.get("url", "Image generated successfully")
 
+                        # Return the raw image URL/data URI so UIs can display it directly.
+                        if isinstance(image_url, str) and (
+                            image_url.startswith("data:image")
+                            or image_url.startswith("http")
+                        ):
+                            return image_url
+
+                        # Fallback to a readable string if no usable URL/data URI.
                         response_parts = [
-                            f"**Generated Image**\n\n",
-                            f"Image URL: {image_url[:100]}..." if len(str(image_url)) > 100 else f"Image URL: {image_url}",
+                            "**Generated Image**\n\n",
+                            f"Image URL: {image_url}",
                             f"\n\n**Prompt Used:** {prompt}",
                             f"\n**Aspect Ratio:** {aspect_ratio}",
                         ]
-
                         return "\n".join(response_parts)
                     else:
                         return f"Image generated but no image data returned.\n\n**Prompt:** {prompt}"

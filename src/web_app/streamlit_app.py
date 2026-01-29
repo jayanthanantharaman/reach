@@ -223,6 +223,14 @@ def render_content_with_images(content: str, key_prefix: str = ""):
         key_prefix: Prefix for unique keys
     """
     import re
+
+    def _safe_b64decode(data: str) -> bytes:
+        """Decode base64 data, fixing missing padding if needed."""
+        cleaned = data.strip()
+        padding_needed = (-len(cleaned)) % 4
+        if padding_needed:
+            cleaned += "=" * padding_needed
+        return base64.b64decode(cleaned)
     
     # Check if content is primarily a raw data URI (image generation result)
     content_stripped = content.strip()
@@ -234,7 +242,7 @@ def render_content_with_images(content: str, key_prefix: str = ""):
             # Add download button
             header, b64_data = content_stripped.split(",", 1)
             mime_type = header.split(":")[1].split(";")[0]
-            image_bytes = base64.b64decode(b64_data)
+            image_bytes = _safe_b64decode(b64_data)
             
             st.download_button(
                 "📥 Download Image",
@@ -268,7 +276,7 @@ def render_content_with_images(content: str, key_prefix: str = ""):
             # Add download button
             header, b64_data = image_data.split(",", 1)
             mime_type = header.split(":")[1].split(";")[0]
-            image_bytes = base64.b64decode(b64_data)
+            image_bytes = _safe_b64decode(b64_data)
             
             st.download_button(
                 "📥 Download Image",
@@ -1158,18 +1166,15 @@ def main():
     render_sidebar()
 
     # Main content area with tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["💬 Chat", "📋 Dashboard", "📚 History", "🛠️ Tools"])
+    tab1, tab2, tab3 = st.tabs(["💬 Chat", "📚 History", "🛠️ Tools"])
 
     with tab1:
         render_chat_interface()
 
     with tab2:
-        render_content_dashboard()
-
-    with tab3:
         render_history_tab()
 
-    with tab4:
+    with tab3:
         render_tools_tab()
 
 

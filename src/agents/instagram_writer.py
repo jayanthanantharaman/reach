@@ -153,20 +153,32 @@ Keep it concise - Instagram users prefer shorter, punchier captions."""
 Keep it concise and punchy - Instagram users prefer shorter captions!"""
 
         try:
-            response = await self.llm_client.generate(
+            response = await self._call_llm(
                 prompt=generation_prompt,
                 system_prompt=self._get_system_prompt(),
             )
 
-            # Ensure hashtags are included
-            if "#" not in response:
-                hashtags = self._generate_hashtags(prompt, context)
-                response = f"{response}\n\n{hashtags}"
-            
-            # Validate and enforce word limit on caption (excluding hashtags)
-            response = self._enforce_word_limit(response, max_words=150)
+            if response.error:
+                raise RuntimeError(response.error)
 
-            return response
+            content = response.content.strip()
+            if not content:
+                content = self._build_fallback_caption(prompt, context)
+
+            # If the model returned only hashtags, prepend a fallback caption.
+            if content and self._is_hashtags_only(content):
+                fallback_caption = self._build_fallback_caption(prompt, context)
+                content = f"{fallback_caption}\n\n{content}"
+
+            # Ensure hashtags are included.
+            if "#" not in content:
+                hashtags = self._generate_hashtags(prompt, context)
+                content = f"{content}\n\n{hashtags}"
+
+            # Validate and enforce word limit on caption (excluding hashtags)
+            content = self._enforce_word_limit(content, max_words=150)
+
+            return content
 
         except Exception as e:
             logger.error(f"Instagram caption generation failed: {str(e)}")
@@ -304,6 +316,33 @@ Include hashtags with each variation."""
             # Return single caption as fallback
             single = await self.generate(prompt, context)
             return [single]
+
+    def _is_hashtags_only(self, content: str) -> bool:
+        """Return True if the content contains only hashtags (no caption text)."""
+        lines = [line.strip() for line in content.splitlines() if line.strip()]
+        if not lines:
+            return False
+        return all(line.startswith("#") for line in lines)
+
+    def _build_fallback_caption(
+        self,
+        prompt: str,
+        context: Optional[dict[str, Any]] = None,
+    ) -> str:
+        """Create a short fallback caption if the model returns only hashtags."""
+        context = context or {}
+        property_type = context.get("property_type", "property")
+        location = context.get("location", "")
+        price = context.get("price", "")
+
+        parts = [f"✨ New {property_type.lower()} alert!"]
+        if location:
+            parts.append(f"📍 {location}")
+        if price:
+            parts.append(f"💰 {price}")
+
+        parts.append("DM for details or to schedule a tour. 🏡")
+        return "\n".join(parts)
 
     def _generate_hashtags(
         self,
