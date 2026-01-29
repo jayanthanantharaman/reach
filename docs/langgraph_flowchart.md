@@ -8,6 +8,25 @@ REACH uses LangGraph to orchestrate multiple specialized agents. The workflow fo
 1. All requests pass through guardrails validation
 2. Requests are routed to the most appropriate agent
 3. Generated content is validated before returning to the user
+4. Content is streamed in real-time for better UX
+5. All generated content is persisted to SQLite storage
+
+## New Features (v1.1)
+
+### 🚀 Streaming Text Generation
+- Real-time text streaming via `generate_stream()` method
+- ChatGPT-like typing cursor effect in UI
+- Automatic fallback to non-streaming for image requests
+
+### 📋 One-Click Copy
+- Copy buttons on all generated content
+- JavaScript-based clipboard integration
+- Visual feedback on successful copy
+
+### 📚 Persistent Content History
+- SQLite-based storage (`content_history.db`)
+- Automatically keeps last 5 items per content type
+- Filter, search, and manage saved content
 
 ## Documentation Index
 
@@ -120,11 +139,36 @@ docs/
 
 ## Related Source Files
 
+### Core Workflow
 | File | Description |
 |------|-------------|
-| `src/workflow/langgraph_workflow.py` | Main workflow implementation |
+| `src/workflow/langgraph_workflow.py` | Main workflow implementation with streaming support |
 | `src/workflow/state_management.py` | Session and state management |
 | `src/core/router.py` | Content routing logic |
+
+### Guardrails
+| File | Description |
+|------|-------------|
 | `src/guardrails/guardrails_manager.py` | Guardrails manager |
 | `src/guardrails/safety_guard.py` | Safety guardrail |
 | `src/guardrails/topical_guard.py` | Topical guardrail |
+
+### Integrations
+| File | Description |
+|------|-------------|
+| `src/integrations/gemini_client.py` | Gemini LLM client with streaming support |
+| `src/integrations/imagen_client.py` | Google Imagen image generation |
+| `src/integrations/serp_client.py` | SERP API for web research |
+
+### Utilities
+| File | Description |
+|------|-------------|
+| `src/utils/content_storage.py` | SQLite-based content history storage |
+| `src/utils/content_optimization.py` | SEO and content optimization |
+| `src/utils/quality_validation.py` | Content quality validation |
+| `src/utils/export_tools.py` | Content export (Markdown, HTML, JSON) |
+
+### Web Application
+| File | Description |
+|------|-------------|
+| `src/web_app/streamlit_app.py` | Streamlit UI with streaming and history tabs |

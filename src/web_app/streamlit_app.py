@@ -27,7 +27,7 @@ LOGO_PATH = ASSETS_DIR / "ask_reach.png"
 
 # Import REACH components
 from src.workflow import REACHGraph
-from src.utils import ContentOptimizer, QualityValidator, ContentExporter
+from src.utils import ContentOptimizer, ContentStorage, QualityValidator, ContentExporter
 
 
 def get_or_create_event_loop():
@@ -77,6 +77,23 @@ def init_session_state():
 
     if "exporter" not in st.session_state:
         st.session_state.exporter = ContentExporter()
+
+    if "content_storage" not in st.session_state:
+        st.session_state.content_storage = ContentStorage()
+
+
+def save_content_to_storage(content: str, content_type: str, prompt: str = None):
+    """Save generated content to persistent storage."""
+    try:
+        st.session_state.content_storage.save_content(
+            session_id=st.session_state.session_id,
+            content_type=content_type,
+            content=content,
+            prompt=prompt,
+        )
+    except Exception as e:
+        # Log error but don't interrupt the user experience
+        st.warning(f"Could not save to history: {str(e)}")
 
 
 def render_sidebar():
@@ -341,6 +358,9 @@ def render_chat_interface():
                         st.session_state.generated_content[content_type] = []
                     st.session_state.generated_content[content_type].append(full_content)
                     
+                    # Save to persistent storage (SQLite)
+                    save_content_to_storage(full_content, content_type, prompt)
+                    
                     # Show analysis if enabled
                     if st.session_state.show_analysis and content_type in ["blog", "linkedin", "instagram"]:
                         render_content_analysis(full_content, content_type)
@@ -390,6 +410,9 @@ def render_chat_interface():
                         if content_type not in st.session_state.generated_content:
                             st.session_state.generated_content[content_type] = []
                         st.session_state.generated_content[content_type].append(content)
+
+                        # Save to persistent storage (SQLite)
+                        save_content_to_storage(content, content_type, prompt)
 
                         # Show analysis if enabled
                         if st.session_state.show_analysis and content_type in ["blog", "linkedin", "instagram"]:
@@ -826,6 +849,138 @@ def render_tools_tab():
         render_instagram_generator(key_prefix="ig_tools")
 
 
+def render_history_tab():
+    """Render the content history tab showing saved content from SQLite."""
+    st.header("📚 Content History")
+    st.caption("View your last 5 generated content items per type (persisted across sessions)")
+
+    storage = st.session_state.content_storage
+
+    # Get storage stats
+    stats = storage.get_stats()
+    
+    # Display stats
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Items", stats["total_items"])
+    with col2:
+        st.metric("Content Types", len(stats["items_by_type"]))
+    with col3:
+        if stats["latest_entry"]:
+            st.metric("Latest Entry", stats["latest_entry"][:10])
+        else:
+            st.metric("Latest Entry", "None")
+
+    st.divider()
+
+    # Filter options
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        content_types = storage.get_content_types()
+        if content_types:
+            selected_type = st.selectbox(
+                "Filter by Content Type:",
+                ["All"] + content_types,
+                key="history_filter_type",
+            )
+        else:
+            selected_type = "All"
+    
+    with col2:
+        limit = st.number_input(
+            "Items to show:",
+            min_value=1,
+            max_value=20,
+            value=5,
+            key="history_limit",
+        )
+
+    # Get content based on filter
+    filter_type = None if selected_type == "All" else selected_type
+    history_items = storage.get_recent_content(
+        content_type=filter_type,
+        limit=limit,
+    )
+
+    if not history_items:
+        st.info("No content history yet. Generate some content to see it here!")
+        return
+
+    # Display content items
+    for idx, item in enumerate(history_items):
+        content_type = item["content_type"]
+        created_at = item["created_at"]
+        content = item["content"]
+        prompt = item.get("prompt", "")
+        
+        # Create a nice header
+        type_emoji = {
+            "blog": "📝",
+            "linkedin": "💼",
+            "instagram": "📸",
+            "research": "🔍",
+            "strategy": "📊",
+            "image": "🖼️",
+            "general": "💬",
+        }.get(content_type, "📄")
+        
+        with st.expander(
+            f"{type_emoji} {content_type.title()} - {created_at[:16] if created_at else 'Unknown'}",
+            expanded=(idx == 0),
+        ):
+            # Show prompt if available
+            if prompt:
+                st.caption(f"**Prompt:** {prompt[:100]}{'...' if len(prompt) > 100 else ''}")
+            
+            # Show content
+            st.markdown(content)
+            
+            # Action buttons
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                render_copy_button(content, f"history_{item['id']}")
+            
+            with col2:
+                st.download_button(
+                    "📥 Download",
+                    content,
+                    f"{content_type}_{item['id']}.txt",
+                    "text/plain",
+                    key=f"download_history_{item['id']}",
+                )
+            
+            with col3:
+                if st.button("🗑️ Delete", key=f"delete_history_{item['id']}"):
+                    storage.delete_content(item["id"])
+                    st.success("Deleted!")
+                    st.rerun()
+
+    st.divider()
+
+    # Clear history options
+    st.subheader("⚠️ Manage History")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if content_types:
+            clear_type = st.selectbox(
+                "Clear by type:",
+                content_types,
+                key="clear_type_select",
+            )
+            if st.button("Clear Selected Type", key="clear_type_btn"):
+                deleted = storage.clear_by_type(clear_type)
+                st.success(f"Deleted {deleted} items of type '{clear_type}'")
+                st.rerun()
+    
+    with col2:
+        if st.button("🗑️ Clear All History", type="secondary", key="clear_all_btn"):
+            deleted = storage.clear_all()
+            st.success(f"Deleted {deleted} items from history")
+            st.rerun()
+
+
 def main():
     """Main application entry point."""
     # Page config
@@ -843,7 +998,7 @@ def main():
     render_sidebar()
 
     # Main content area with tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["💬 Chat", "📸 Instagram", "📋 Dashboard", "🛠️ Tools"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["💬 Chat", "📸 Instagram", "📋 Dashboard", "📚 History", "🛠️ Tools"])
 
     with tab1:
         render_chat_interface()
@@ -855,6 +1010,9 @@ def main():
         render_content_dashboard()
 
     with tab4:
+        render_history_tab()
+
+    with tab5:
         render_tools_tab()
 
 

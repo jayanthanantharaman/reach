@@ -6,15 +6,25 @@ REACH is a sophisticated multi-agent system built with LangGraph that transforms
 
 ## 🌟 Features
 
+### Content Generation
 - **🔍 Deep Research Agent**: Conducts comprehensive web research using SERP API
 - **📝 SEO Blog Writer**: Creates search-optimized long-form real estate content with auto-generated featured images
 - **💼 LinkedIn Post Writer**: Generates engaging professional social content for realtors
 - **📸 Instagram Caption Writer**: Creates engaging captions with relevant hashtags for property posts
 - **🖼️ Image Generation**: Produces custom property visuals with Google Imagen
 - **📊 Content Strategist**: Develops real estate marketing plans and content calendars
-- **🤖 Intelligent Routing**: Automatically routes requests to the right agent
-- **🛡️ NeMo Guardrails**: Topical (Real Estate only) and Safety (profanity blocking) guardrails
 - **🎨 Instagram Post Generator**: Combined image + caption generation for complete Instagram posts
+
+### User Experience
+- **🚀 Streaming Text Generation**: Real-time text streaming for a ChatGPT-like experience
+- **📋 One-Click Copy**: Copy buttons on all generated content for easy clipboard access
+- **📚 Content History**: SQLite-based persistent storage of last 5 items per content type
+- **🤖 Intelligent Routing**: Automatically routes requests to the right agent
+
+### Safety & Quality
+- **🛡️ NeMo Guardrails**: Topical (Real Estate only) and Safety (profanity blocking) guardrails
+- **📊 Quality Validation**: Automatic content quality scoring and analysis
+- **🔍 SEO Analysis**: Built-in SEO scoring for blog content
 
 ## 🏗️ Architecture
 
@@ -24,12 +34,18 @@ REACH is a sophisticated multi-agent system built with LangGraph that transforms
 graph TB
     subgraph "User Interface"
         UI[🖥️ Streamlit Web App]
+        STREAM[🚀 Streaming Display]
+        COPY[📋 Copy Buttons]
     end
 
     subgraph "Orchestration Layer"
         WF[🔄 LangGraph Workflow]
         SM[📊 Session Manager]
         RT[🎯 Content Router]
+    end
+
+    subgraph "Storage Layer"
+        CS[📚 Content Storage<br/>SQLite]
     end
 
     subgraph "Guardrails Layer"
@@ -45,11 +61,11 @@ graph TB
         LW[💼 LinkedIn Writer]
         IW[📸 Instagram Writer]
         IG[🖼️ Image Generator]
-        CS[📊 Content Strategist]
+        CST[📊 Content Strategist]
     end
 
     subgraph "Integration Layer"
-        GC[🧠 Gemini Client]
+        GC[🧠 Gemini Client<br/>+ Streaming]
         IC[🎨 Imagen Client]
         SC[🔎 SERP Client]
     end
@@ -61,9 +77,12 @@ graph TB
     end
 
     UI --> WF
+    UI --> STREAM
+    UI --> COPY
     WF --> SM
     WF --> RT
     WF --> GR
+    WF --> CS
     
     GR --> TG
     GR --> SG
@@ -74,7 +93,7 @@ graph TB
     RT --> LW
     RT --> IW
     RT --> IG
-    RT --> CS
+    RT --> CST
     
     QH --> GC
     RA --> GC
@@ -84,13 +103,16 @@ graph TB
     IW --> GC
     IG --> GC
     IG --> IC
-    CS --> GC
+    CST --> GC
     
     GC --> GEMINI
     IC --> IMAGEN
     SC --> SERP
 
     style UI fill:#e1f5fe
+    style STREAM fill:#e1f5fe
+    style COPY fill:#e1f5fe
+    style CS fill:#fff9c4
     style WF fill:#fff3e0
     style GR fill:#ffebee
     style TG fill:#ffcdd2
@@ -104,13 +126,18 @@ graph TB
 
 | Layer | Component | Description |
 |-------|-----------|-------------|
-| **UI** | Streamlit App | Interactive web interface with chat, dashboard, and tools |
+| **UI** | Streamlit App | Interactive web interface with chat, dashboard, history, and tools |
+| **UI** | Streaming Display | Real-time text streaming with typing cursor effect |
+| **UI** | Copy Buttons | One-click clipboard copy for all generated content |
+| **Storage** | Content Storage | SQLite-based persistent storage (last 5 items per type) |
 | **Orchestration** | LangGraph Workflow | Multi-agent orchestration with state management |
 | **Orchestration** | Content Router | Intelligent routing based on user intent |
 | **Guardrails** | Topical Guard | Restricts content to Real Estate topics |
 | **Guardrails** | Safety Guard | Blocks profanity and inappropriate content |
 | **Agents** | 7 Specialized Agents | Query, Research, Blog, LinkedIn, Instagram, Image, Strategy |
-| **Integration** | API Clients | Gemini (LLM), Imagen (Images), SERP (Research) |
+| **Integration** | Gemini Client | LLM with streaming support via google-genai |
+| **Integration** | Imagen Client | Image generation via google-genai |
+| **Integration** | SERP Client | Web research via SERP API |
 
 ### Data Flow
 
@@ -227,11 +254,40 @@ pip install jupyterlab-mermaid
 
 ### Web Interface
 
-The Streamlit web interface provides three main sections:
+The Streamlit web interface provides five main tabs:
 
-1. **💬 Chat**: Conversational interface for real estate content creation
-2. **📋 Dashboard**: View and manage generated content
-3. **🛠️ Tools**: SEO analyzer, quality checker, and export tools
+1. **💬 Chat**: Conversational interface with real-time streaming text generation
+2. **📸 Instagram**: Dedicated Instagram post generator (image + caption)
+3. **📋 Dashboard**: View and manage content generated in current session
+4. **📚 History**: Browse persistent content history (last 5 items per type)
+5. **🛠️ Tools**: SEO analyzer, quality checker, and export tools
+
+### Streaming Text Generation
+
+REACH features real-time text streaming for a ChatGPT-like experience:
+
+- **Live Text Display**: Watch content appear character-by-character
+- **Typing Cursor**: Visual cursor indicator (▌) during generation
+- **Toggle Control**: Enable/disable streaming in sidebar settings
+- **Smart Detection**: Automatically uses non-streaming for image requests
+
+### Copy Buttons
+
+Every generated content item includes a one-click copy button:
+
+- **Chat Messages**: Copy button appears next to each assistant response
+- **History Tab**: Copy, download, or delete any saved content
+- **Instant Feedback**: Button shows "✅ Copied!" confirmation
+
+### Content History
+
+The History tab provides persistent storage across sessions:
+
+- **Automatic Saving**: All generated content is saved to SQLite
+- **Last 5 Per Type**: Keeps the 5 most recent items for each content type
+- **Filter & Search**: Filter by content type (blog, linkedin, instagram, etc.)
+- **Management**: Delete individual items or clear by type
+- **Statistics**: View total items, content types, and latest entry
 
 ### Quick Actions
 
