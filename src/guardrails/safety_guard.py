@@ -172,14 +172,20 @@ class SafetyGuard:
         )
 
         # Leetspeak and obfuscation patterns
+        # These patterns are designed to catch intentionally obfuscated profanity
+        # They use word boundaries and specific character substitutions
         self.leetspeak_patterns = [
-            (r'f[u\*@0]ck', 'fuck'),
-            (r'sh[i\*1]t', 'shit'),
-            (r'b[i\*1]tch', 'bitch'),
-            (r'a[s\$]s', 'ass'),
-            (r'd[i\*1]ck', 'dick'),
-            (r'c[u\*]nt', 'cunt'),
+            (r'\bf[u\*@0]ck', 'fuck'),
+            (r'\bsh[i\*1]t\b', 'shit'),
+            (r'\bb[i\*1]tch', 'bitch'),
+            (r'\ba\$\$\b', 'ass'),  # Only match a$$ with dollar signs, not regular "ass" in words
+            (r'\ba\*\*\b', 'ass'),  # Only match a** with asterisks
+            (r'\bd[i\*1]ck\b', 'dick'),
+            (r'\bc[u\*]nt\b', 'cunt'),
         ]
+        
+        # Compile safe words pattern for filtering false positives
+        self.safe_words_set = set(word.lower() for word in self.SAFE_WORDS)
 
     def _check_leetspeak(self, text: str) -> list[str]:
         """
@@ -324,21 +330,28 @@ class SafetyGuard:
                 "reason": "No LLM client for semantic analysis",
             }
 
-        prompt = f"""Analyze the following text for safety issues.
+        prompt = f"""Analyze the following text for safety issues in a real estate context.
 
-Check for:
-1. Profanity or offensive language (even if disguised or misspelled)
+Check for ACTUAL safety issues:
+1. Explicit profanity or slurs (NOT legitimate words like "assess", "class", "glass", "assistant")
 2. Hate speech or discrimination
-3. Violence or threats
-4. Adult/explicit content
-5. Illegal activities
+3. Explicit violence or threats
+4. Adult/explicit sexual content
+5. Illegal drug references
 6. Harmful or dangerous content
+
+IMPORTANT: Do NOT flag legitimate business/real estate words like:
+- "assess", "assessment", "assessor" (property assessment)
+- "class", "classic" (property class)
+- "assistant" (real estate assistant)
+- "asset", "assets" (property assets)
+- Any other normal business vocabulary
 
 Text to analyze: "{text}"
 
 Respond with ONLY one of these:
-- "SAFE" if the text is appropriate and professional
-- "UNSAFE" if the text contains any of the above issues
+- "SAFE" if the text is appropriate for professional real estate content
+- "UNSAFE" if the text contains actual profanity, hate speech, or explicit content
 
 Response:"""
 
