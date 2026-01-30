@@ -1150,6 +1150,128 @@ def render_history_tab():
             st.rerun()
 
 
+def inject_custom_css():
+    """Inject custom CSS for scrollable containers and better layout."""
+    st.markdown("""
+    <style>
+    /* Main chat container - scrollable */
+    .chat-container {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #333;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background-color: #0e1117;
+    }
+    
+    /* Content display area - scrollable */
+    .content-scroll-container {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #333;
+        border-radius: 8px;
+        background-color: #0e1117;
+    }
+    
+    /* Generated content preview - scrollable */
+    .generated-content-preview {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #444;
+        border-radius: 8px;
+        background-color: #1a1a2e;
+        margin: 0.5rem 0;
+    }
+    
+    /* Image container with max height */
+    .image-container {
+        max-height: 400px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .image-container img {
+        max-height: 400px;
+        width: auto;
+        object-fit: contain;
+    }
+    
+    /* Blog content container */
+    .blog-content {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1rem;
+        line-height: 1.6;
+    }
+    
+    /* Instagram post preview */
+    .instagram-preview {
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #444;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
+        background-size: 400% 400%;
+    }
+    
+    /* Scrollbar styling */
+    .chat-container::-webkit-scrollbar,
+    .content-scroll-container::-webkit-scrollbar,
+    .generated-content-preview::-webkit-scrollbar,
+    .blog-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .chat-container::-webkit-scrollbar-track,
+    .content-scroll-container::-webkit-scrollbar-track,
+    .generated-content-preview::-webkit-scrollbar-track,
+    .blog-content::-webkit-scrollbar-track {
+        background: #1a1a2e;
+        border-radius: 4px;
+    }
+    
+    .chat-container::-webkit-scrollbar-thumb,
+    .content-scroll-container::-webkit-scrollbar-thumb,
+    .generated-content-preview::-webkit-scrollbar-thumb,
+    .blog-content::-webkit-scrollbar-thumb {
+        background: #4a4a5a;
+        border-radius: 4px;
+    }
+    
+    .chat-container::-webkit-scrollbar-thumb:hover,
+    .content-scroll-container::-webkit-scrollbar-thumb:hover,
+    .generated-content-preview::-webkit-scrollbar-thumb:hover,
+    .blog-content::-webkit-scrollbar-thumb:hover {
+        background: #6a6a7a;
+    }
+    
+    /* Fix for Streamlit's default image sizing */
+    .stImage > img {
+        max-height: 400px !important;
+        width: auto !important;
+        object-fit: contain !important;
+    }
+    
+    /* Chat message styling */
+    .stChatMessage {
+        max-height: none !important;
+    }
+    
+    /* Expander content scrollable */
+    .streamlit-expanderContent {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
 def main():
     """Main application entry point."""
     # Page config
@@ -1159,6 +1281,9 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded",
     )
+
+    # Inject custom CSS for scrollable containers
+    inject_custom_css()
 
     # Initialize session state
     init_session_state()
