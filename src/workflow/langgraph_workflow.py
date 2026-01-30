@@ -310,9 +310,15 @@ class REACHGraph:
             }
 
     async def _blog_node(self, state: GraphState) -> GraphState:
-        """Execute blog writer agent with header image generation."""
-        import re
+        """
+        Execute blog writer agent with header image generation.
         
+        The BlogWriterAgent handles image generation internally using:
+        1. ImagePromptAgent to analyze blog and create optimized prompt
+        2. ImageGeneratorAgent to generate ONE header image (16:9)
+        
+        We disable image generation in the workflow to avoid duplicates.
+        """
         try:
             user_input = state["user_input"]
             context = state.get("context", {})
@@ -321,70 +327,35 @@ class REACHGraph:
             if state.get("research_results"):
                 context["research_results"] = state["research_results"]
 
-            # Step 1: Generate the blog content
+            # Check if image generation should be enabled
+            # Default to True, but can be disabled via context
+            include_image = context.get("include_image", True)
+            
+            # Validate image request if image generation is enabled
+            if include_image and self.guardrails:
+                image_check = await self.guardrails.validate_image_request(user_input)
+                if not image_check["passed"]:
+                    logger.warning(f"Blog image blocked by guardrails: {image_check.get('message', 'Unknown')}")
+                    include_image = False
+
+            # Set image generation flag in context
+            # The BlogWriterAgent will handle image generation internally
+            context["include_image"] = include_image
+            context["image_style"] = context.get("image_style", "professional")
+
+            # Generate the blog content with image (handled by BlogWriterAgent)
+            # BlogWriterAgent uses ImagePromptAgent -> ImageGeneratorAgent flow
             logger.info(f"Generating blog content for: {user_input}")
             blog_content = await self.blog_writer.generate(user_input, context)
 
             # Note: Output validation removed - only user input is validated by guardrails
             # Agent-generated content is trusted and not blocked
-
-            # Step 2: Extract blog title and summary for image generation
-            # Try to extract the title from the blog content
-            title_match = re.search(r'^#\s+(.+)$', blog_content, re.MULTILINE)
-            blog_title = title_match.group(1) if title_match else user_input
-            
-            # Get first paragraph as summary (skip the title)
-            paragraphs = [p.strip() for p in blog_content.split('\n\n') if p.strip() and not p.strip().startswith('#')]
-            blog_summary = paragraphs[0][:200] if paragraphs else user_input
-
-            # Step 3: Generate a header image based on the blog content
-            image_data_uri = None
-            try:
-                # Check if image generation should proceed
-                should_generate_image = True
-                if self.guardrails:
-                    image_check = await self.guardrails.validate_image_request(blog_title)
-                    if not image_check["passed"]:
-                        logger.warning(f"Blog image blocked by guardrails: {image_check.get('message', 'Unknown')}")
-                        should_generate_image = False
-                
-                if should_generate_image:
-                    # Create an image prompt based on the blog content
-                    image_prompt = f"Create a professional blog header image for an article about: {blog_title}. The image should be visually appealing, relevant to real estate, and suitable for a blog post. Style: modern, professional, clean composition with space for text overlay."
-                    
-                    logger.info(f"Generating blog header image for: {blog_title}")
-                    image_result = await self.image_generator.generate(
-                        image_prompt,
-                        context={"style": "professional", "aspect_ratio": "16:9"},
-                    )
-                    
-                    # Extract the data URI from the image result
-                    if image_result:
-                        data_uri_match = re.search(r'(data:image/[^;\s]+;base64,[A-Za-z0-9+/=]+)', str(image_result))
-                        if data_uri_match:
-                            image_data_uri = data_uri_match.group(1)
-                        elif str(image_result).startswith("data:image"):
-                            image_data_uri = image_result
-                        else:
-                            logger.info(f"Blog image result format: {str(image_result)[:100]}...")
-                            
-            except Exception as img_error:
-                logger.error(f"Blog header image generation failed: {str(img_error)}")
-                # Continue without image - blog content is still valuable
-
-            # Step 4: Combine blog content with header image
-            if image_data_uri:
-                # Insert the header image at the beginning of the blog
-                full_content = f"""![Blog Header Image]({image_data_uri})
-
-{blog_content}
-"""
-            else:
-                full_content = blog_content
+            # Note: Image generation is handled by BlogWriterAgent internally
+            # No additional image generation needed here
 
             return {
                 **state,
-                "generated_content": full_content,
+                "generated_content": blog_content,
                 "content_type": "blog",
             }
         except Exception as e:
