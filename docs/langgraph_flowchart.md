@@ -146,35 +146,37 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    START([📸 Instagram Request]) --> CHECK{🛡️ Guardrails<br/>Input Check}
-    CHECK -->|Passed| IMAGE[🖼️ Generate 1:1 Image]
-    CHECK -->|Blocked| CAPTION_ONLY[Caption Only]
+    START([📸 Instagram Request]) --> CHECK{🔒 Safety Only<br/>No Topical Check}
+    CHECK -->|Safe| IMAGE[🖼️ Generate 1:1 Image]
+    CHECK -->|Unsafe| CAPTION_ONLY[Caption Only]
     IMAGE --> CAPTION[📝 Generate Caption + Hashtags]
     CAPTION_ONLY --> CAPTION
     CAPTION --> FORMAT[Format as Instagram Post]
     FORMAT --> RETURN([✅ Return Complete Post])
     
     style START fill:#e3f2fd
-    style CHECK fill:#fff9c4
+    style CHECK fill:#e8f5e9
     style IMAGE fill:#fff3e0
     style CAPTION fill:#e8f5e9
     style RETURN fill:#c8e6c9
 ```
 
-> **Note:** Output validation has been removed. Only user input is validated by guardrails.
+> **Note:** Instagram posts use **SAFETY guardrails only** (no topical check). This allows creative freedom while still blocking inappropriate content like profanity, violence, or explicit material.
 
 ### Available Agents
 
-| Agent | Purpose | Trigger Keywords | Image Generation |
-|-------|---------|------------------|------------------|
-| 🔍 Research Agent | Research topics using SERP API | research, find, analyze | ❌ |
-| 📝 Blog Writer | SEO-optimized blog posts | blog, article, write | ✅ Header Image (16:9) via ImagePromptAgent |
-| 💼 LinkedIn Writer | Professional LinkedIn posts | linkedin, professional | ❌ |
-| 📸 Instagram Writer | Captions with hashtags | instagram, ig, insta, caption | ✅ Post Image (1:1) |
-| 🖼️ Image Generator | Property images via Imagen | image, picture, generate | ✅ Custom |
-| 🎯 Image Prompt Agent | Creates optimized image prompts | (internal use) | ❌ (creates prompts only) |
-| 📊 Content Strategist | Marketing strategies | strategy, plan, campaign | ❌ |
-| 🤖 Query Handler | General queries (fallback) | (default) | ❌ |
+| Agent | Purpose | Trigger Keywords | Image Generation | Guardrails |
+|-------|---------|------------------|------------------|------------|
+| 🔍 Research Agent | Research topics using SERP API | research, find, analyze | ❌ | Safety + Topical |
+| 📝 Blog Writer | SEO-optimized blog posts | blog, article, write | ✅ Header Image (16:9) via ImagePromptAgent | Safety + Topical |
+| 💼 LinkedIn Writer | Professional LinkedIn posts | linkedin, professional | ❌ | Safety + Topical |
+| 📸 Instagram Writer | Captions with hashtags | instagram, ig, insta, caption | ✅ Post Image (1:1) | **Safety Only** |
+| 🖼️ Image Generator | Property images via Imagen | image, picture, generate | ✅ Custom | Safety + Topical |
+| 🎯 Image Prompt Agent | Creates optimized image prompts | (internal use) | ❌ (creates prompts only) | N/A |
+| 📊 Content Strategist | Marketing strategies | strategy, plan, campaign | ❌ | Safety + Topical |
+| 🤖 Query Handler | General queries (fallback) | (default) | ❌ | Safety + Topical |
+
+> **Note:** Instagram posts use **Safety guardrails only** (no topical restriction). This allows creative freedom for social media content while still blocking inappropriate material.
 
 ### Content Type Detection Priority
 

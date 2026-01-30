@@ -55,6 +55,7 @@ class GuardrailsManager:
         self,
         user_input: str,
         content_type: str = "text",
+        skip_topical: bool = False,
     ) -> dict[str, Any]:
         """
         Validate user input against all enabled guardrails.
@@ -62,6 +63,7 @@ class GuardrailsManager:
         Args:
             user_input: The user's input text
             content_type: Type of content ("text" or "image")
+            skip_topical: If True, skip topical validation (only run safety)
             
         Returns:
             Dictionary with:
@@ -89,8 +91,8 @@ class GuardrailsManager:
                 logger.info(f"Input blocked by safety guardrail: {user_input[:50]}...")
                 return results
 
-        # Check topical relevance (Real Estate only)
-        if self.enable_topical and self.topical_guard:
+        # Check topical relevance (Real Estate only) - can be skipped
+        if not skip_topical and self.enable_topical and self.topical_guard:
             topical_result = await self.topical_guard.validate(user_input)
             results["details"]["topical"] = topical_result
 
@@ -102,6 +104,30 @@ class GuardrailsManager:
                 return results
 
         return results
+
+    async def validate_safety_only(
+        self,
+        user_input: str,
+        content_type: str = "text",
+    ) -> dict[str, Any]:
+        """
+        Validate user input against safety guardrails only (no topical check).
+        
+        This is useful for content types like Instagram where we want to allow
+        creative freedom while still blocking inappropriate content.
+        
+        Args:
+            user_input: The user's input text
+            content_type: Type of content ("text" or "image")
+            
+        Returns:
+            Dictionary with:
+                - passed: Boolean indicating if safety validation passed
+                - message: Response message if blocked
+                - blocked_by: Which guardrail blocked the request
+                - details: Detailed results from safety guardrail
+        """
+        return await self.validate_input(user_input, content_type, skip_topical=True)
 
     async def validate_output(
         self,

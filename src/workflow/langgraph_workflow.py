@@ -389,7 +389,12 @@ class REACHGraph:
             }
 
     async def _instagram_node(self, state: GraphState) -> GraphState:
-        """Execute Instagram post generation (image + caption)."""
+        """
+        Execute Instagram post generation (image + caption).
+        
+        Note: Instagram posts only use SAFETY guardrails (no topical check).
+        This allows creative freedom while still blocking inappropriate content.
+        """
         import re
         
         try:
@@ -402,12 +407,13 @@ class REACHGraph:
             # Step 1: Generate the image
             image_data_uri = None
             try:
-                # Additional image safety check
+                # Safety-only check for Instagram (no topical restriction)
                 should_generate_image = True
                 if self.guardrails:
-                    image_check = await self.guardrails.validate_image_request(user_input)
-                    if not image_check["passed"]:
-                        logger.warning(f"Image blocked by guardrails: {image_check.get('message', 'Unknown')}")
+                    # Use safety-only validation for Instagram
+                    safety_check = await self.guardrails.validate_safety_only(user_input, "image")
+                    if not safety_check["passed"]:
+                        logger.warning(f"Image blocked by safety guardrails: {safety_check.get('message', 'Unknown')}")
                         should_generate_image = False
                 
                 if should_generate_image:
@@ -726,6 +732,9 @@ class REACHGraph:
         This method generates both a property image and an engaging
         Instagram caption with relevant hashtags.
         
+        Note: Instagram posts only use SAFETY guardrails (no topical check).
+        This allows creative freedom while still blocking inappropriate content.
+        
         Args:
             image_description: Description of the property image to generate
             property_details: Optional property details (location, price, features)
@@ -736,23 +745,14 @@ class REACHGraph:
         """
         property_details = property_details or {}
 
-        # Validate with guardrails first
+        # Validate with safety guardrails only (no topical check for Instagram)
         if self.guardrails:
-            # Check topical relevance
-            input_check = await self.guardrails.validate_input(image_description, "image")
-            if not input_check["passed"]:
+            # Safety-only check for Instagram
+            safety_check = await self.guardrails.validate_safety_only(image_description, "image")
+            if not safety_check["passed"]:
                 return {
                     "success": False,
-                    "error": input_check["message"],
-                    "guardrails": {"blocked": True, "blocked_by": input_check["blocked_by"]},
-                }
-
-            # Check image safety
-            image_check = await self.guardrails.validate_image_request(image_description)
-            if not image_check["passed"]:
-                return {
-                    "success": False,
-                    "error": image_check["message"],
+                    "error": safety_check["message"],
                     "guardrails": {"blocked": True, "blocked_by": "safety"},
                 }
 
@@ -940,6 +940,9 @@ Help users create high-quality real estate marketing content.""",
         """
         Generate only an Instagram caption with hashtags.
         
+        Note: Instagram captions only use SAFETY guardrails (no topical check).
+        This allows creative freedom while still blocking inappropriate content.
+        
         Args:
             content_description: Description of the content
             context: Optional context (property details, etc.)
@@ -950,14 +953,14 @@ Help users create high-quality real estate marketing content.""",
         """
         context = context or {}
 
-        # Validate with guardrails
+        # Validate with safety guardrails only (no topical check for Instagram)
         if self.guardrails:
-            input_check = await self.guardrails.validate_input(content_description, "text")
-            if not input_check["passed"]:
+            safety_check = await self.guardrails.validate_safety_only(content_description, "text")
+            if not safety_check["passed"]:
                 return {
                     "success": False,
-                    "error": input_check["message"],
-                    "guardrails": {"blocked": True, "blocked_by": input_check["blocked_by"]},
+                    "error": safety_check["message"],
+                    "guardrails": {"blocked": True, "blocked_by": "safety"},
                 }
 
         try:
