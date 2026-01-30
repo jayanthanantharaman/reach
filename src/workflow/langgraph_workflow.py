@@ -293,11 +293,8 @@ class REACHGraph:
 
             result = await self.research_agent.generate(user_input, context)
 
-            # Validate output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(result)
-                if not output_check["passed"]:
-                    result = "I apologize, but I cannot provide that response. Please try a different query."
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             return {
                 **state,
@@ -328,15 +325,8 @@ class REACHGraph:
             logger.info(f"Generating blog content for: {user_input}")
             blog_content = await self.blog_writer.generate(user_input, context)
 
-            # Validate output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(blog_content)
-                if not output_check["passed"]:
-                    return {
-                        **state,
-                        "generated_content": "I apologize, but I cannot provide that response. Please try a different query.",
-                        "content_type": "blog",
-                    }
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             # Step 2: Extract blog title and summary for image generation
             # Try to extract the title from the blog content
@@ -412,11 +402,8 @@ class REACHGraph:
 
             result = await self.linkedin_writer.generate(user_input, context)
 
-            # Validate output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(result)
-                if not output_check["passed"]:
-                    result = "I apologize, but I cannot provide that response. Please try a different query."
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             return {
                 **state,
@@ -477,11 +464,8 @@ class REACHGraph:
             # Step 2: Generate the caption with hashtags
             caption_result = await self.instagram_writer.generate(user_input, context)
 
-            # Validate caption output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(caption_result)
-                if not output_check["passed"]:
-                    caption_result = "Beautiful property! Contact us for more details. 🏠\n\n#realestate #property #home #dreamhome #realtor"
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             # Combine image and caption into a formatted response
             if image_data_uri:
@@ -557,11 +541,8 @@ class REACHGraph:
 
             result = await self.content_strategist.generate(user_input, context)
 
-            # Validate output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(result)
-                if not output_check["passed"]:
-                    result = "I apologize, but I cannot provide that response. Please try a different query."
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             return {
                 **state,
@@ -583,11 +564,8 @@ class REACHGraph:
 
             result = await self.query_handler.generate(user_input, context)
 
-            # Validate output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(result)
-                if not output_check["passed"]:
-                    result = "I apologize, but I cannot provide that response. Please try a different query."
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             return {
                 **state,
@@ -823,15 +801,8 @@ class REACHGraph:
                 property_details=property_details,
             )
 
-            # Validate caption output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(caption_result["full_post"])
-                if not output_check["passed"]:
-                    caption_result = {
-                        "caption": "Beautiful property! Contact us for more details. 🏠",
-                        "hashtags": "#realestate #property #home #dreamhome #realtor",
-                        "full_post": "Beautiful property! Contact us for more details. 🏠\n\n#realestate #property #home #dreamhome #realtor",
-                    }
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             return {
                 "success": True,
@@ -1021,11 +992,8 @@ Help users create high-quality real estate marketing content.""",
         try:
             caption = await self.instagram_writer.generate(content_description, context)
 
-            # Validate output
-            if self.guardrails:
-                output_check = await self.guardrails.validate_output(caption)
-                if not output_check["passed"]:
-                    caption = "Beautiful property! Contact us for more details. 🏠\n\n#realestate #property #home #dreamhome #realtor"
+            # Note: Output validation removed - only user input is validated by guardrails
+            # Agent-generated content is trusted and not blocked
 
             # Split caption and hashtags
             parts = caption.rsplit("\n\n", 1)

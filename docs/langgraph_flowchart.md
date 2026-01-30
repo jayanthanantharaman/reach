@@ -5,12 +5,14 @@ This documentation explains the decision-making process and architecture of the 
 ## Overview
 
 REACH uses LangGraph to orchestrate multiple specialized agents. The workflow follows a structured decision tree that ensures:
-1. All requests pass through guardrails validation
+1. All **user input** passes through guardrails validation (safety + topical)
 2. Requests are routed to the most appropriate agent
-3. Generated content is validated before returning to the user
+3. Agent-generated content is **trusted and not blocked** (no output validation)
 4. Content is streamed in real-time for better UX (text-only content)
 5. Images are generated alongside content (blogs, Instagram posts)
 6. All generated content is persisted to SQLite storage
+
+> **Note:** Safety guardrails only validate user input prompts, not agent-generated content. This ensures agents can generate comprehensive content without false positives.
 
 ## New Features (v1.2)
 
@@ -77,7 +79,7 @@ REACH uses LangGraph to orchestrate multiple specialized agents. The workflow fo
 
 ```mermaid
 flowchart TD
-    START([🚀 User Request]) --> GUARDRAILS{🛡️ Guardrails}
+    START([🚀 User Request]) --> GUARDRAILS{🛡️ Guardrails<br/>Input Validation Only}
     GUARDRAILS -->|Blocked| END_BLOCKED([❌ Return Error])
     GUARDRAILS -->|Passed| ROUTER{🎯 Router}
     
@@ -90,27 +92,28 @@ flowchart TD
     ROUTER -->|general| GENERAL[🤖 Query Handler]
     
     BLOG --> BLOG_IMG[🖼️ Generate Header Image]
-    BLOG_IMG --> VALIDATE
+    BLOG_IMG --> SUCCESS
     
     INSTAGRAM --> IG_IMG[🖼️ Generate Post Image]
     IG_IMG --> IG_CAPTION[📝 Generate Caption]
-    IG_CAPTION --> VALIDATE
+    IG_CAPTION --> SUCCESS
     
-    RESEARCH --> VALIDATE{🛡️ Validate Output}
-    LINKEDIN --> VALIDATE
-    IMAGE --> VALIDATE
-    STRATEGY --> VALIDATE
-    GENERAL --> VALIDATE
-    
-    VALIDATE --> SUCCESS([✅ Return Content])
+    RESEARCH --> SUCCESS([✅ Return Content])
+    LINKEDIN --> SUCCESS
+    IMAGE --> SUCCESS
+    STRATEGY --> SUCCESS
+    GENERAL --> SUCCESS
 
     style START fill:#e3f2fd
     style END_BLOCKED fill:#ffcdd2
     style SUCCESS fill:#c8e6c9
+    style GUARDRAILS fill:#fff9c4
     style BLOG_IMG fill:#fff3e0
     style IG_IMG fill:#fff3e0
     style IG_CAPTION fill:#e8f5e9
 ```
+
+> **Important:** Guardrails only validate **user input**, not agent-generated content. This prevents false positives where legitimate real estate terms might be incorrectly flagged.
 
 ### Blog Generation Flow (with ImagePromptAgent)
 
@@ -143,22 +146,22 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    START([📸 Instagram Request]) --> CHECK{Guardrails Check}
-    CHECK -->|Passed| IMAGE[Generate 1:1 Image]
+    START([📸 Instagram Request]) --> CHECK{🛡️ Guardrails<br/>Input Check}
+    CHECK -->|Passed| IMAGE[🖼️ Generate 1:1 Image]
     CHECK -->|Blocked| CAPTION_ONLY[Caption Only]
-    IMAGE --> CAPTION[Generate Caption + Hashtags]
+    IMAGE --> CAPTION[📝 Generate Caption + Hashtags]
     CAPTION_ONLY --> CAPTION
-    CAPTION --> VALIDATE{Validate Output}
-    VALIDATE -->|Passed| FORMAT[Format as Instagram Post]
-    VALIDATE -->|Blocked| DEFAULT[Use Default Caption]
-    FORMAT --> RETURN([Return Complete Post])
-    DEFAULT --> RETURN
+    CAPTION --> FORMAT[Format as Instagram Post]
+    FORMAT --> RETURN([✅ Return Complete Post])
     
     style START fill:#e3f2fd
+    style CHECK fill:#fff9c4
     style IMAGE fill:#fff3e0
     style CAPTION fill:#e8f5e9
     style RETURN fill:#c8e6c9
 ```
+
+> **Note:** Output validation has been removed. Only user input is validated by guardrails.
 
 ### Available Agents
 
@@ -206,11 +209,12 @@ The router checks content types in this order (first match wins):
 
 ### Key Decision Points
 
-1. **Guardrails Gate** - Safety check → Topical check
+1. **Guardrails Gate** - Safety check → Topical check (user input only)
 2. **Pattern Matching** - High confidence routing (0.9)
 3. **Keyword Scoring** - Medium confidence routing (0.3-0.8)
 4. **History Context** - Low confidence routing (0.6)
-5. **Output Validation** - Ensure safe content
+
+> **Note:** Output validation has been removed. Agent-generated content is trusted and returned directly to the user.
 
 ### Streaming vs Non-Streaming
 

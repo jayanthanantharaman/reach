@@ -4,7 +4,9 @@ This document describes the main workflow of the REACH LangGraph multi-agent sys
 
 ## Overview
 
-The main workflow orchestrates the entire content generation process, from receiving a user request to returning the generated content. It includes session management, guardrails validation, routing, agent execution, **automatic image generation**, and output validation.
+The main workflow orchestrates the entire content generation process, from receiving a user request to returning the generated content. It includes session management, guardrails validation, routing, agent execution, and **automatic image generation**.
+
+> **Important:** Guardrails only validate **user input**, not agent-generated content. This prevents false positives where legitimate real estate terms might be incorrectly flagged.
 
 ## Workflow Diagram
 
@@ -13,7 +15,7 @@ flowchart TD
     START([🚀 User Request]) --> SESSION[📋 Get/Create Session]
     SESSION --> INIT_STATE[Initialize GraphState]
     
-    INIT_STATE --> GUARDRAILS{🛡️ Guardrails<br/>Validation}
+    INIT_STATE --> GUARDRAILS{🛡️ Guardrails<br/>Input Validation Only}
     
     GUARDRAILS -->|Safety Check First| SAFETY{🔒 Safety Guard}
     SAFETY -->|Contains Profanity/Inappropriate| BLOCKED_SAFETY[❌ Block Request<br/>Return Safety Message]
@@ -44,39 +46,35 @@ flowchart TD
     DETERMINE_AGENT -->|strategy| STRATEGY[📊 Content Strategist Agent]
     DETERMINE_AGENT -->|general| GENERAL[🤖 Query Handler Agent]
     
-    RESEARCH --> VALIDATE_OUTPUT{🛡️ Validate Output}
+    RESEARCH --> STORE
     
     BLOG --> BLOG_CONTENT[📝 Generate Blog Content]
-    BLOG_CONTENT --> BLOG_IMG_CHECK{🛡️ Image Safety Check}
+    BLOG_CONTENT --> BLOG_IMG_CHECK{🛡️ Image Safety Check<br/>Input Only}
     BLOG_IMG_CHECK -->|Passed| BLOG_PROMPT[🎯 ImagePromptAgent<br/>Analyze Blog & Create Prompt]
     BLOG_IMG_CHECK -->|Blocked| BLOG_SKIP[Skip Image]
     BLOG_PROMPT --> BLOG_IMG[🖼️ ImageGeneratorAgent<br/>Generate Header Image 16:9]
     BLOG_IMG --> BLOG_COMBINE[📝 Combine Image + Blog]
     BLOG_SKIP --> BLOG_COMBINE
-    BLOG_COMBINE --> VALIDATE_OUTPUT
+    BLOG_COMBINE --> STORE
     
-    LINKEDIN --> VALIDATE_OUTPUT
+    LINKEDIN --> STORE
     
-    INSTAGRAM --> IG_IMG_CHECK{🛡️ Image Safety Check}
+    INSTAGRAM --> IG_IMG_CHECK{🛡️ Image Safety Check<br/>Input Only}
     IG_IMG_CHECK -->|Passed| IG_IMG[🖼️ Generate Post Image<br/>1:1 aspect ratio]
     IG_IMG_CHECK -->|Blocked| IG_CAPTION_ONLY[Caption Only Mode]
     IG_IMG --> IG_CAPTION[📝 Generate Caption + Hashtags]
     IG_CAPTION_ONLY --> IG_CAPTION
     IG_CAPTION --> IG_COMBINE[📸 Format Instagram Post]
-    IG_COMBINE --> VALIDATE_OUTPUT
+    IG_COMBINE --> STORE
     
-    IMAGE --> IMAGE_SAFETY{🖼️ Image Safety Check}
-    IMAGE_SAFETY -->|Safe| VALIDATE_OUTPUT
+    IMAGE --> IMAGE_SAFETY{🖼️ Image Safety Check<br/>Input Only}
+    IMAGE_SAFETY -->|Safe| STORE
     IMAGE_SAFETY -->|Unsafe| BLOCKED_IMAGE[❌ Block Image Request]
     
-    STRATEGY --> VALIDATE_OUTPUT
-    GENERAL --> VALIDATE_OUTPUT
+    STRATEGY --> STORE
+    GENERAL --> STORE
     
-    VALIDATE_OUTPUT -->|Safe| STORE[💾 Store Content]
-    VALIDATE_OUTPUT -->|Unsafe| SANITIZE[🧹 Replace with Safe Message]
-    SANITIZE --> STORE
-    
-    STORE --> UPDATE_SESSION[📝 Update Session History]
+    STORE[💾 Store Content] --> UPDATE_SESSION[📝 Update Session History]
     UPDATE_SESSION --> SUCCESS[✅ Return Content]
     
     BLOCKED_SAFETY --> END([📤 Return to User])
@@ -86,7 +84,7 @@ flowchart TD
 
     style START fill:#e3f2fd
     style END fill:#e3f2fd
-    style GUARDRAILS fill:#fff3e0
+    style GUARDRAILS fill:#fff9c4
     style SAFETY fill:#ffebee
     style TOPICAL fill:#ffebee
     style BLOCKED_SAFETY fill:#ffcdd2
@@ -99,6 +97,8 @@ flowchart TD
     style IG_IMG fill:#fff3e0
     style IG_CAPTION fill:#e8f5e9
 ```
+
+> **Note:** Output validation has been removed from the workflow. Only user input is validated by guardrails. Agent-generated content is trusted and returned directly.
 
 ## Workflow Steps
 
@@ -150,11 +150,7 @@ flowchart TD
 #### Other Agents
 - Research, LinkedIn, Strategy, General agents generate text-only content
 
-### 6. Output Validation
-- Generated content is validated against safety guardrails
-- Unsafe content is replaced with a safe fallback message
-
-### 7. Store and Return
+### 6. Store and Return (No Output Validation)
 - Content is stored in session
 - Session history is updated
 - Result is returned to user
