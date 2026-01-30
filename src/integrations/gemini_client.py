@@ -7,6 +7,7 @@ natural language understanding and generation using the new google-genai package
 """
 
 import logging
+import re
 from typing import Any, Optional
 
 from google import genai
@@ -15,6 +16,9 @@ from google.genai import types
 from ..core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+# Conservative cap to avoid oversized prompts (Gemini rejects very large inputs).
+MAX_INPUT_CHARS = 200_000
 
 
 class GeminiClient:
@@ -72,6 +76,24 @@ class GeminiClient:
         """Check if the client is initialized."""
         return self._initialized
 
+    def _sanitize_text(self, text: Optional[str]) -> Optional[str]:
+        """Strip oversized data URIs and truncate very long inputs."""
+        if not text:
+            return text
+
+        # Remove embedded base64 images to avoid massive token counts.
+        text = re.sub(
+            r"data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+",
+            "[image omitted]",
+            text,
+        )
+
+        if len(text) > MAX_INPUT_CHARS:
+            logger.warning("Prompt too large (%s chars); truncating to %s chars.", len(text), MAX_INPUT_CHARS)
+            text = text[:MAX_INPUT_CHARS]
+
+        return text
+
     async def generate(
         self,
         prompt: str,
@@ -101,6 +123,9 @@ class GeminiClient:
             }
 
         try:
+            prompt = self._sanitize_text(prompt) or ""
+            system_prompt = self._sanitize_text(system_prompt)
+
             # Build generation config
             generation_config = types.GenerateContentConfig(
                 temperature=temperature if temperature is not None else self.default_temperature,
@@ -173,6 +198,15 @@ class GeminiClient:
             }
 
         try:
+            prompt = self._sanitize_text(prompt) or ""
+            system_prompt = self._sanitize_text(system_prompt)
+            sanitized_history = []
+            for message in history:
+                sanitized_history.append({
+                    "role": message.get("role", "user"),
+                    "content": self._sanitize_text(message.get("content", "")) or "",
+                })
+
             # Build generation config
             generation_config = types.GenerateContentConfig(
                 temperature=temperature if temperature is not None else self.default_temperature,
@@ -181,7 +215,7 @@ class GeminiClient:
             )
 
             # Format history into contents
-            contents = self._format_history_as_contents(history)
+            contents = self._format_history_as_contents(sanitized_history)
             
             # Add current prompt
             contents.append(types.Content(
