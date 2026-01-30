@@ -27,6 +27,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY . .
 
+
+# Bake env defaults into the image if the example file exists
+RUN if [ -f .env.example ]; then cp .env.example .env; fi
+
 # Create a non-root user for security
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
