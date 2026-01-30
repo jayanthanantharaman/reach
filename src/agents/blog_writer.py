@@ -3,8 +3,8 @@ SEO Blog Writer Agent for REACH.
 
 
 This agent creates search-optimized long-form blog content with proper
-structure, keywords, and SEO best practices. It can also generate
-relevant images for the blog using the Image Generator Agent.
+structure, keywords, and SEO best practices. It uses the ImagePromptAgent
+to generate optimized image prompts, then the ImageGeneratorAgent to create images.
 """
 
 import logging
@@ -12,7 +12,6 @@ import re
 from typing import Any, Optional
 
 from .base_agent import AgentConfig, BaseAgent
-from .image_generator import ImageGeneratorAgent
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +26,11 @@ class BlogWriterAgent(BaseAgent):
     - Incorporates target keywords naturally
     - Generates meta descriptions and title tags
     - Follows content marketing best practices
+    
+    Image Generation Flow:
+    1. Generate the blog content first
+    2. Use ImagePromptAgent to analyze the blog and create an optimized image prompt
+    3. Use ImageGeneratorAgent to generate the image from the prompt
     """
 
     DEFAULT_SYSTEM_PROMPT = """You are an expert SEO content writer specializing in creating high-quality, search-optimized blog posts and articles. Your role is to:
@@ -77,12 +81,30 @@ Always write in a {tone} tone appropriate for the target audience."""
         )
         super().__init__(config, llm_client)
         
-        # Initialize image generator for blog images
-        self.image_generator = ImageGeneratorAgent(
-            llm_client=llm_client,
-            image_client=image_client,
-        )
+        # Store clients for later use
+        self._llm_client = llm_client
         self.image_client = image_client
+        
+        # Lazy-load agents to avoid circular imports
+        self._image_prompt_agent = None
+        self._image_generator_agent = None
+
+    def _get_image_prompt_agent(self):
+        """Lazy-load the ImagePromptAgent."""
+        if self._image_prompt_agent is None:
+            from .image_prompt_agent import ImagePromptAgent
+            self._image_prompt_agent = ImagePromptAgent(llm_client=self._llm_client)
+        return self._image_prompt_agent
+
+    def _get_image_generator_agent(self):
+        """Lazy-load the ImageGeneratorAgent."""
+        if self._image_generator_agent is None:
+            from .image_generator import ImageGeneratorAgent
+            self._image_generator_agent = ImageGeneratorAgent(
+                llm_client=self._llm_client,
+                image_client=self.image_client,
+            )
+        return self._image_generator_agent
 
     def set_image_client(self, client: Any) -> None:
         """
@@ -92,7 +114,9 @@ Always write in a {tone} tone appropriate for the target audience."""
             client: Image generation client (Google Imagen)
         """
         self.image_client = client
-        self.image_generator.set_image_client(client)
+        # Update the image generator if it exists
+        if self._image_generator_agent is not None:
+            self._image_generator_agent.set_image_client(client)
         logger.info("Image client set for Blog Writer Agent")
 
     async def generate(
@@ -102,6 +126,13 @@ Always write in a {tone} tone appropriate for the target audience."""
     ) -> str:
         """
         Generate an SEO-optimized blog post with an optional image.
+        
+        Flow:
+        1. Generate the blog content
+        2. If include_image=True:
+           a. Use ImagePromptAgent to analyze blog and create image prompt
+           b. Use ImageGeneratorAgent to generate the image
+        3. Insert image into blog content
         
         Args:
             user_input: Blog topic or request
@@ -123,7 +154,7 @@ Always write in a {tone} tone appropriate for the target audience."""
         include_image = context.get("include_image", True)
         image_style = context.get("image_style", "professional")
 
-        # Build the blog generation prompt
+        # Step 1: Build the blog generation prompt
         prompt = self._build_blog_prompt(
             topic=topic,
             keywords=keywords,
@@ -133,19 +164,21 @@ Always write in a {tone} tone appropriate for the target audience."""
             research_results=research_results,
         )
 
-        # Generate the blog post
+        # Step 2: Generate the blog post
+        logger.info(f"Generating blog content for topic: {topic}")
         response = await self._retry_generation(prompt, max_retries=2)
 
         if response.error:
             return f"Unable to generate blog post: {response.error}"
 
-        # Post-process the content
+        # Step 3: Post-process the content
         blog_content = self._post_process_blog(response.content, keywords)
+        logger.info(f"Blog content generated successfully ({len(blog_content)} chars)")
 
-        # Generate image if enabled
-        if include_image:
+        # Step 4: Generate image if enabled
+        if include_image and self.image_client:
+            logger.info("Starting image generation for blog...")
             image_result = await self._generate_blog_image(
-                topic=topic,
                 blog_content=blog_content,
                 style=image_style,
             )
@@ -153,6 +186,9 @@ Always write in a {tone} tone appropriate for the target audience."""
             if image_result:
                 # Insert image after the title/intro section
                 blog_content = self._insert_image_into_blog(blog_content, image_result)
+                logger.info("Image inserted into blog content")
+            else:
+                logger.warning("Image generation failed, returning blog without image")
 
         return blog_content
 
@@ -183,7 +219,7 @@ Always write in a {tone} tone appropriate for the target audience."""
         research_results = context.get("research_results")
         image_style = context.get("image_style", "professional")
 
-        # Build the blog generation prompt
+        # Step 1: Build the blog generation prompt
         prompt = self._build_blog_prompt(
             topic=topic,
             keywords=keywords,
@@ -193,7 +229,8 @@ Always write in a {tone} tone appropriate for the target audience."""
             research_results=research_results,
         )
 
-        # Generate the blog post
+        # Step 2: Generate the blog post
+        logger.info(f"Generating blog content for topic: {topic}")
         response = await self._retry_generation(prompt, max_retries=2)
 
         if response.error:
@@ -205,28 +242,35 @@ Always write in a {tone} tone appropriate for the target audience."""
                 "image_prompt": None,
             }
 
-        # Post-process the content
+        # Step 3: Post-process the content
         blog_content = self._post_process_blog(response.content, keywords)
+        logger.info(f"Blog content generated successfully ({len(blog_content)} chars)")
 
-        # Extract title and summary for image generation
-        title = self._extract_title(blog_content)
-        summary = self._extract_summary(blog_content)
-
-        # Generate optimized image prompt
-        image_prompt = await self.image_generator.create_blog_header_prompt(
-            blog_title=title or topic,
-            blog_summary=summary or topic,
+        # Step 4: Use ImagePromptAgent to generate optimized image prompt
+        logger.info("Using ImagePromptAgent to analyze blog and create image prompt...")
+        image_prompt_agent = self._get_image_prompt_agent()
+        image_prompt = await image_prompt_agent.generate_from_blog(
+            blog_content=blog_content,
+            style=image_style,
+            aspect_ratio="16:9",
         )
+        logger.info(f"Image prompt generated: {image_prompt[:100]}...")
 
-        # Generate the image
-        image_result = await self.image_generator.generate(
+        # Step 5: Use ImageGeneratorAgent to generate the image
+        logger.info("Using ImageGeneratorAgent to generate image...")
+        image_generator = self._get_image_generator_agent()
+        image_result = await image_generator.generate(
             user_input=image_prompt,
             context={
                 "style": image_style,
                 "aspect_ratio": "16:9",
-                "optimize_prompt": False,  # Already optimized
+                "optimize_prompt": False,  # Already optimized by ImagePromptAgent
             },
         )
+
+        # Extract title and summary for metadata
+        title = self._extract_title(blog_content)
+        summary = self._extract_summary(blog_content)
 
         return {
             "success": True,
@@ -239,15 +283,17 @@ Always write in a {tone} tone appropriate for the target audience."""
 
     async def _generate_blog_image(
         self,
-        topic: str,
         blog_content: str,
         style: str = "professional",
     ) -> Optional[str]:
         """
-        Generate a relevant image for the blog post.
+        Generate a relevant image for the blog post using the two-step process.
+        
+        Flow:
+        1. ImagePromptAgent analyzes the blog and creates an optimized prompt
+        2. ImageGeneratorAgent generates the image from the prompt
         
         Args:
-            topic: Blog topic
             blog_content: Generated blog content
             style: Image style preset
             
@@ -255,27 +301,28 @@ Always write in a {tone} tone appropriate for the target audience."""
             Image result string or None if generation fails
         """
         try:
-            # Extract title and summary for better image generation
-            title = self._extract_title(blog_content)
-            summary = self._extract_summary(blog_content)
-
-            # Create optimized blog header prompt
-            image_prompt = await self.image_generator.create_blog_header_prompt(
-                blog_title=title or topic,
-                blog_summary=summary or topic,
+            # Step 1: Use ImagePromptAgent to create optimized image prompt
+            logger.info("Step 1: ImagePromptAgent analyzing blog content...")
+            image_prompt_agent = self._get_image_prompt_agent()
+            image_prompt = await image_prompt_agent.generate_from_blog(
+                blog_content=blog_content,
+                style=style,
+                aspect_ratio="16:9",
             )
+            logger.info(f"Image prompt created: {image_prompt[:100]}...")
 
-            logger.info(f"Generating blog image with prompt: {image_prompt[:100]}...")
-
-            # Generate the image
-            image_result = await self.image_generator.generate(
+            # Step 2: Use ImageGeneratorAgent to generate the image
+            logger.info("Step 2: ImageGeneratorAgent generating image...")
+            image_generator = self._get_image_generator_agent()
+            image_result = await image_generator.generate(
                 user_input=image_prompt,
                 context={
                     "style": style,
                     "aspect_ratio": "16:9",  # Wide format for blog headers
-                    "optimize_prompt": False,  # Already optimized by create_blog_header_prompt
+                    "optimize_prompt": False,  # Already optimized by ImagePromptAgent
                 },
             )
+            logger.info("Image generated successfully")
 
             return image_result
 

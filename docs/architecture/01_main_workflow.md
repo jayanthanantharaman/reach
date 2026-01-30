@@ -46,10 +46,11 @@ flowchart TD
     
     RESEARCH --> VALIDATE_OUTPUT{🛡️ Validate Output}
     
-    BLOG --> BLOG_EXTRACT[📄 Extract Title]
-    BLOG_EXTRACT --> BLOG_IMG_CHECK{🛡️ Image Safety Check}
-    BLOG_IMG_CHECK -->|Passed| BLOG_IMG[🖼️ Generate Header Image<br/>16:9 aspect ratio]
+    BLOG --> BLOG_CONTENT[📝 Generate Blog Content]
+    BLOG_CONTENT --> BLOG_IMG_CHECK{🛡️ Image Safety Check}
+    BLOG_IMG_CHECK -->|Passed| BLOG_PROMPT[🎯 ImagePromptAgent<br/>Analyze Blog & Create Prompt]
     BLOG_IMG_CHECK -->|Blocked| BLOG_SKIP[Skip Image]
+    BLOG_PROMPT --> BLOG_IMG[🖼️ ImageGeneratorAgent<br/>Generate Header Image 16:9]
     BLOG_IMG --> BLOG_COMBINE[📝 Combine Image + Blog]
     BLOG_SKIP --> BLOG_COMBINE
     BLOG_COMBINE --> VALIDATE_OUTPUT
@@ -122,12 +123,18 @@ flowchart TD
 
 ### 5. Agent Execution with Image Generation
 
-#### Blog Writer Agent
-1. Generate blog content using Gemini LLM
-2. Extract title from blog (looks for `# Title` pattern)
-3. Validate image request against guardrails
-4. Generate 16:9 header image using Imagen
-5. Combine image + blog content
+#### Blog Writer Agent (with ImagePromptAgent)
+1. **BlogWriterAgent** generates blog content using Gemini LLM
+2. Validate image request against guardrails
+3. **ImagePromptAgent** analyzes the blog content:
+   - Extracts title (looks for `# Title` pattern)
+   - Extracts summary/meta description
+   - Identifies key themes and visual elements
+4. **ImagePromptAgent** creates an optimized image prompt
+5. **ImageGeneratorAgent** generates ONE 16:9 header image from the prompt
+6. Image is inserted into blog content after title/intro
+
+**Note:** The ImagePromptAgent ensures only ONE image is generated per blog by creating a single, optimized prompt based on the blog's actual content.
 
 #### Instagram Writer Agent
 1. Validate image request against guardrails

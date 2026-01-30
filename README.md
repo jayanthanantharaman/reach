@@ -450,6 +450,7 @@ mypy src/
 | `BlogWriterAgent` | SEO blog writing with images | `generate()`, `generate_with_image()`, `generate_outline()` |
 | `LinkedInWriterAgent` | LinkedIn posts | `generate()`, `generate_variations()` |
 | `ImageGeneratorAgent` | Image creation with Imagen | `generate()`, `optimize_prompt()` |
+| `ImagePromptAgent` | Creates optimized image prompts from content | `generate()`, `generate_from_blog()`, `generate_from_summary()` |
 | `InstagramWriterAgent` | Instagram captions with hashtags | `generate()`, `generate_for_image()`, `generate_variations()` |
 | `ContentStrategistAgent` | Strategy planning | `generate()`, `create_content_calendar()` |
 
@@ -489,12 +490,23 @@ result = await graph.generate_instagram_caption(
 
 ## 📝 Blog Post Generation with Images
 
-The Blog Writer Agent now automatically generates a relevant featured image for each blog post using Google Imagen.
+The Blog Writer Agent now automatically generates a relevant featured image for each blog post using a two-step process with the **ImagePromptAgent**.
+
+### Image Generation Flow
+
+```
+1. BlogWriterAgent → Generates full blog content
+2. ImagePromptAgent → Analyzes blog, extracts title/summary/themes
+3. ImagePromptAgent → Creates optimized image prompt
+4. ImageGeneratorAgent → Generates ONE header image (16:9)
+5. Image inserted into blog content
+```
 
 ### Features
 
 - **Automatic Image Generation**: Each blog post includes a relevant header image
-- **Smart Image Prompts**: Extracts title and summary to create optimized image prompts
+- **Smart Image Prompts**: Uses `ImagePromptAgent` to analyze blog and create optimized prompts
+- **Single Image**: Only ONE image is generated per blog (no duplicates)
 - **16:9 Aspect Ratio**: Blog header images are generated in wide landscape format
 - **Configurable**: Enable/disable image generation via context parameters
 - **Separate Image Access**: Use `generate_with_image()` to get blog and image data separately

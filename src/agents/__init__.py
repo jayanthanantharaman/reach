@@ -8,6 +8,7 @@ from .blog_writer import BlogWriterAgent
 from .linkedin_writer import LinkedInWriterAgent
 from .instagram_writer import InstagramWriterAgent
 from .image_generator import ImageGeneratorAgent
+from .image_prompt_agent import ImagePromptAgent
 from .content_strategist import ContentStrategistAgent
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "LinkedInWriterAgent",
     "InstagramWriterAgent",
     "ImageGeneratorAgent",
+    "ImagePromptAgent",
     "ContentStrategistAgent",
 ]

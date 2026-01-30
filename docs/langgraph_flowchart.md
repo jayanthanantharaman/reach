@@ -112,23 +112,32 @@ flowchart TD
     style IG_CAPTION fill:#e8f5e9
 ```
 
-### Blog Generation Flow
+### Blog Generation Flow (with ImagePromptAgent)
 
 ```mermaid
 flowchart TD
-    START([📝 Blog Request]) --> WRITE[Generate Blog Content]
-    WRITE --> EXTRACT[Extract Title & Summary]
-    EXTRACT --> CHECK{Guardrails Check}
-    CHECK -->|Passed| GENERATE[Generate Header Image]
+    START([📝 Blog Request]) --> WRITE[📝 BlogWriterAgent<br/>Generate Blog Content]
+    WRITE --> CHECK{🛡️ Guardrails Check}
     CHECK -->|Blocked| SKIP[Skip Image]
+    CHECK -->|Passed| PROMPT[🎯 ImagePromptAgent<br/>Analyze Blog & Create Prompt]
+    PROMPT --> GENERATE[🖼️ ImageGeneratorAgent<br/>Generate Header Image]
     GENERATE --> COMBINE[Combine Image + Blog]
     SKIP --> COMBINE
-    COMBINE --> RETURN([Return Complete Blog])
+    COMBINE --> RETURN([✅ Return Complete Blog])
     
     style START fill:#e3f2fd
+    style WRITE fill:#e8f5e9
+    style PROMPT fill:#fff9c4
     style GENERATE fill:#fff3e0
     style RETURN fill:#c8e6c9
 ```
+
+**Blog Image Generation Flow:**
+1. **BlogWriterAgent** generates the full blog content
+2. **ImagePromptAgent** (intermediary) analyzes the blog, extracts title/summary/themes
+3. **ImagePromptAgent** creates an optimized image prompt
+4. **ImageGeneratorAgent** generates ONE header image (16:9) from the prompt
+5. Image is inserted into the blog content
 
 ### Instagram Generation Flow
 
@@ -156,10 +165,11 @@ flowchart TD
 | Agent | Purpose | Trigger Keywords | Image Generation |
 |-------|---------|------------------|------------------|
 | 🔍 Research Agent | Research topics using SERP API | research, find, analyze | ❌ |
-| 📝 Blog Writer | SEO-optimized blog posts | blog, article, write | ✅ Header Image (16:9) |
+| 📝 Blog Writer | SEO-optimized blog posts | blog, article, write | ✅ Header Image (16:9) via ImagePromptAgent |
 | 💼 LinkedIn Writer | Professional LinkedIn posts | linkedin, professional | ❌ |
 | 📸 Instagram Writer | Captions with hashtags | instagram, ig, insta, caption | ✅ Post Image (1:1) |
 | 🖼️ Image Generator | Property images via Imagen | image, picture, generate | ✅ Custom |
+| 🎯 Image Prompt Agent | Creates optimized image prompts | (internal use) | ❌ (creates prompts only) |
 | 📊 Content Strategist | Marketing strategies | strategy, plan, campaign | ❌ |
 | 🤖 Query Handler | General queries (fallback) | (default) | ❌ |
 
@@ -276,9 +286,10 @@ docs/
 ### Agents
 | File | Description |
 |------|-------------|
-| `src/agents/blog_writer.py` | Blog writer agent |
+| `src/agents/blog_writer.py` | Blog writer agent (uses ImagePromptAgent for images) |
 | `src/agents/instagram_writer.py` | Instagram caption writer |
-| `src/agents/image_generator.py` | Image generation agent |
+| `src/agents/image_generator.py` | Image generation agent (Google Imagen) |
+| `src/agents/image_prompt_agent.py` | **NEW** Intermediary agent that creates optimized image prompts |
 | `src/agents/linkedin_writer.py` | LinkedIn post writer |
 | `src/agents/research_agent.py` | Research agent |
 | `src/agents/content_strategist.py` | Content strategy agent |
