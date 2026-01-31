@@ -31,31 +31,32 @@ REACH is a sophisticated multi-agent system built with LangGraph that transforms
 ### System Architecture Diagram
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 graph TB
-    subgraph "User Interface"
-        UI[🖥️ Streamlit Web App]
+    subgraph UI_LAYER["🖥️ User Interface"]
+        UI[Streamlit Web App]
         STREAM[🚀 Streaming Display]
         COPY[📋 Copy Buttons]
     end
 
-    subgraph "Orchestration Layer"
-        WF[🔄 LangGraph Workflow]
+    subgraph ORCH_LAYER["🔄 Orchestration Layer"]
+        WF[LangGraph Workflow]
         SM[📊 Session Manager]
         RT[🎯 Content Router]
     end
 
-    subgraph "Storage Layer"
+    subgraph STORAGE_LAYER["💾 Storage Layer"]
         CS[📚 Content Storage<br/>SQLite]
     end
 
-    subgraph "Guardrails Layer"
-        GR[🛡️ Guardrails Manager]
+    subgraph GUARD_LAYER["🛡️ Guardrails Layer"]
+        GR[Guardrails Manager]
         TG[📋 Topical Guard<br/>Real Estate Only]
         SG[🔒 Safety Guard<br/>Profanity Blocking]
     end
 
-    subgraph "Agent Layer"
-        QH[🤖 Query Handler]
+    subgraph AGENT_LAYER["🤖 Agent Layer"]
+        QH[Query Handler]
         RA[🔍 Research Agent]
         BW[📝 Blog Writer]
         LW[💼 LinkedIn Writer]
@@ -64,16 +65,16 @@ graph TB
         CST[📊 Content Strategist]
     end
 
-    subgraph "Integration Layer"
+    subgraph INT_LAYER["🔌 Integration Layer"]
         GC[🧠 Gemini Client<br/>+ Streaming]
         IC[🎨 Imagen Client]
         SC[🔎 SERP Client]
     end
 
-    subgraph "External Services"
-        GEMINI[☁️ Google Gemini API]
-        IMAGEN[☁️ Google Imagen API]
-        SERP[☁️ SERP API]
+    subgraph EXT_LAYER["☁️ External Services"]
+        GEMINI[Google Gemini API]
+        IMAGEN[Google Imagen API]
+        SERP[SERP API]
     end
 
     UI --> WF
@@ -109,17 +110,29 @@ graph TB
     IC --> IMAGEN
     SC --> SERP
 
-    style UI fill:#e1f5fe
-    style STREAM fill:#e1f5fe
-    style COPY fill:#e1f5fe
-    style CS fill:#fff9c4
-    style WF fill:#fff3e0
-    style GR fill:#ffebee
-    style TG fill:#ffcdd2
-    style SG fill:#ffcdd2
-    style GEMINI fill:#e8f5e9
-    style IMAGEN fill:#e8f5e9
-    style SERP fill:#e8f5e9
+    style UI fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    style STREAM fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    style COPY fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    style CS fill:#ca8a04,stroke:#a16207,stroke-width:2px,color:#fff
+    style WF fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
+    style SM fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
+    style RT fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
+    style GR fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+    style TG fill:#991b1b,stroke:#7f1d1d,stroke-width:2px,color:#fff
+    style SG fill:#991b1b,stroke:#7f1d1d,stroke-width:2px,color:#fff
+    style QH fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style RA fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style BW fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style LW fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style IW fill:#db2777,stroke:#be185d,stroke-width:2px,color:#fff
+    style IG fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style CST fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style GC fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style IC fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style SC fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style GEMINI fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style IMAGEN fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style SERP fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
 ```
 
 ### Component Overview

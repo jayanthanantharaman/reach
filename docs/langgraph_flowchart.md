@@ -78,6 +78,7 @@ REACH uses LangGraph to orchestrate multiple specialized agents. The workflow fo
 ### Main Workflow Diagram
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 flowchart TD
     START([🚀 User Request]) --> GUARDRAILS{🛡️ Guardrails<br/>Input Validation Only}
     GUARDRAILS -->|Blocked| END_BLOCKED([❌ Return Error])
@@ -104,13 +105,21 @@ flowchart TD
     STRATEGY --> SUCCESS
     GENERAL --> SUCCESS
 
-    style START fill:#e3f2fd
-    style END_BLOCKED fill:#ffcdd2
-    style SUCCESS fill:#c8e6c9
-    style GUARDRAILS fill:#fff9c4
-    style BLOG_IMG fill:#fff3e0
-    style IG_IMG fill:#fff3e0
-    style IG_CAPTION fill:#e8f5e9
+    style START fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    style END_BLOCKED fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+    style SUCCESS fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style GUARDRAILS fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
+    style ROUTER fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
+    style RESEARCH fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style BLOG fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style LINKEDIN fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style INSTAGRAM fill:#db2777,stroke:#be185d,stroke-width:2px,color:#fff
+    style IMAGE fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style STRATEGY fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style GENERAL fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
+    style BLOG_IMG fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
+    style IG_IMG fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
+    style IG_CAPTION fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
 ```
 
 > **Important:** Guardrails only validate **user input**, not agent-generated content. This prevents false positives where legitimate real estate terms might be incorrectly flagged.
@@ -118,6 +127,7 @@ flowchart TD
 ### Blog Generation Flow (with ImagePromptAgent)
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 flowchart TD
     START([📝 Blog Request]) --> WRITE[📝 BlogWriterAgent<br/>Generate Blog Content]
     WRITE --> CHECK{🛡️ Guardrails Check}
@@ -128,11 +138,14 @@ flowchart TD
     SKIP --> COMBINE
     COMBINE --> RETURN([✅ Return Complete Blog])
     
-    style START fill:#e3f2fd
-    style WRITE fill:#e8f5e9
-    style PROMPT fill:#fff9c4
-    style GENERATE fill:#fff3e0
-    style RETURN fill:#c8e6c9
+    style START fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    style WRITE fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style CHECK fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
+    style SKIP fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
+    style PROMPT fill:#ca8a04,stroke:#a16207,stroke-width:2px,color:#fff
+    style GENERATE fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
+    style COMBINE fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
+    style RETURN fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
 ```
 
 **Blog Image Generation Flow:**
@@ -145,6 +158,7 @@ flowchart TD
 ### Instagram Generation Flow
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 flowchart TD
     START([📸 Instagram Request]) --> CHECK{🔒 Safety Only<br/>No Topical Check}
     CHECK -->|Safe| IMAGE[🖼️ Generate 1:1 Image]
@@ -154,11 +168,13 @@ flowchart TD
     CAPTION --> FORMAT[Format as Instagram Post]
     FORMAT --> RETURN([✅ Return Complete Post])
     
-    style START fill:#e3f2fd
-    style CHECK fill:#e8f5e9
-    style IMAGE fill:#fff3e0
-    style CAPTION fill:#e8f5e9
-    style RETURN fill:#c8e6c9
+    style START fill:#db2777,stroke:#be185d,stroke-width:2px,color:#fff
+    style CHECK fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style IMAGE fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
+    style CAPTION_ONLY fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
+    style CAPTION fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style FORMAT fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
+    style RETURN fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
 ```
 
 > **Note:** Instagram posts use **SAFETY guardrails only** (no topical check). This allows creative freedom while still blocking inappropriate content like profanity, violence, or explicit material.
