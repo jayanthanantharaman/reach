@@ -11,7 +11,7 @@ The main workflow orchestrates the entire content generation process, from recei
 ## Workflow Diagram
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     START([🚀 User Request]) --> SESSION[📋 Get/Create Session]
     SESSION --> INIT_STATE[Initialize GraphState]
@@ -83,47 +83,47 @@ flowchart TD
     BLOCKED_IMAGE --> END
     SUCCESS --> END
 
-    style START fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
-    style END fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
-    style SESSION fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style INIT_STATE fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style GUARDRAILS fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
-    style SAFETY fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
-    style TOPICAL fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
-    style BLOCKED_SAFETY fill:#991b1b,stroke:#7f1d1d,stroke-width:2px,color:#fff
-    style BLOCKED_TOPIC fill:#991b1b,stroke:#7f1d1d,stroke-width:2px,color:#fff
-    style BLOCKED_IMAGE fill:#991b1b,stroke:#7f1d1d,stroke-width:2px,color:#fff
-    style ROUTE fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style PATTERN fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style KEYWORDS fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style HISTORY fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style CLASSIFY_HIGH fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style CLASSIFY_MED fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style CLASSIFY_LOW fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style GENERAL_DEFAULT fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style DETERMINE_AGENT fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style RESEARCH fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style BLOG fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style LINKEDIN fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style INSTAGRAM fill:#db2777,stroke:#be185d,stroke-width:2px,color:#fff
-    style IMAGE fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style STRATEGY fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style GENERAL fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style BLOG_CONTENT fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style BLOG_IMG_CHECK fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
-    style BLOG_PROMPT fill:#ca8a04,stroke:#a16207,stroke-width:2px,color:#fff
-    style BLOG_IMG fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    style BLOG_COMBINE fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style BLOG_SKIP fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style IG_IMG_CHECK fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
-    style IG_IMG fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    style IG_CAPTION fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style IG_CAPTION_ONLY fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style IG_COMBINE fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style IMAGE_SAFETY fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
-    style STORE fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
-    style UPDATE_SESSION fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style SUCCESS fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style START fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style END fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style SESSION fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style INIT_STATE fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style GUARDRAILS fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style SAFETY fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#ffffff
+    style TOPICAL fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#ffffff
+    style BLOCKED_SAFETY fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style BLOCKED_TOPIC fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style BLOCKED_IMAGE fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style ROUTE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style PATTERN fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style KEYWORDS fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style HISTORY fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style CLASSIFY_HIGH fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style CLASSIFY_MED fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style CLASSIFY_LOW fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style GENERAL_DEFAULT fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style DETERMINE_AGENT fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RESEARCH fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style BLOG fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style LINKEDIN fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style INSTAGRAM fill:#f778ba,stroke:#ff9bce,stroke-width:2px,color:#ffffff
+    style IMAGE fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style STRATEGY fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style GENERAL fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style BLOG_CONTENT fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style BLOG_IMG_CHECK fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style BLOG_PROMPT fill:#e3b341,stroke:#f0d75e,stroke-width:2px,color:#0d1117
+    style BLOG_IMG fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style BLOG_COMBINE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style BLOG_SKIP fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style IG_IMG_CHECK fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style IG_IMG fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style IG_CAPTION fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style IG_CAPTION_ONLY fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style IG_COMBINE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style IMAGE_SAFETY fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style STORE fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style UPDATE_SESSION fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style SUCCESS fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
 ```
 
 > **Note:** Output validation has been removed from the workflow. Only user input is validated by guardrails. Agent-generated content is trusted and returned directly.

@@ -78,7 +78,7 @@ REACH uses LangGraph to orchestrate multiple specialized agents. The workflow fo
 ### Main Workflow Diagram
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     START([🚀 User Request]) --> GUARDRAILS{🛡️ Guardrails<br/>Input Validation Only}
     GUARDRAILS -->|Blocked| END_BLOCKED([❌ Return Error])
@@ -105,21 +105,21 @@ flowchart TD
     STRATEGY --> SUCCESS
     GENERAL --> SUCCESS
 
-    style START fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
-    style END_BLOCKED fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
-    style SUCCESS fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
-    style GUARDRAILS fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
-    style ROUTER fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style RESEARCH fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style BLOG fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style LINKEDIN fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style INSTAGRAM fill:#db2777,stroke:#be185d,stroke-width:2px,color:#fff
-    style IMAGE fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style STRATEGY fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style GENERAL fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style BLOG_IMG fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    style IG_IMG fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    style IG_CAPTION fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style START fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style END_BLOCKED fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#ffffff
+    style SUCCESS fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style GUARDRAILS fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style ROUTER fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RESEARCH fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style BLOG fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style LINKEDIN fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style INSTAGRAM fill:#f778ba,stroke:#ff9bce,stroke-width:2px,color:#ffffff
+    style IMAGE fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style STRATEGY fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style GENERAL fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style BLOG_IMG fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style IG_IMG fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style IG_CAPTION fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
 ```
 
 > **Important:** Guardrails only validate **user input**, not agent-generated content. This prevents false positives where legitimate real estate terms might be incorrectly flagged.
@@ -127,7 +127,7 @@ flowchart TD
 ### Blog Generation Flow (with ImagePromptAgent)
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     START([📝 Blog Request]) --> WRITE[📝 BlogWriterAgent<br/>Generate Blog Content]
     WRITE --> CHECK{🛡️ Guardrails Check}
@@ -138,14 +138,14 @@ flowchart TD
     SKIP --> COMBINE
     COMBINE --> RETURN([✅ Return Complete Blog])
     
-    style START fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
-    style WRITE fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style CHECK fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
-    style SKIP fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style PROMPT fill:#ca8a04,stroke:#a16207,stroke-width:2px,color:#fff
-    style GENERATE fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    style COMBINE fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style RETURN fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style START fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style WRITE fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style CHECK fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style SKIP fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style PROMPT fill:#e3b341,stroke:#f0d75e,stroke-width:2px,color:#0d1117
+    style GENERATE fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style COMBINE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RETURN fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
 ```
 
 **Blog Image Generation Flow:**
@@ -158,7 +158,7 @@ flowchart TD
 ### Instagram Generation Flow
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     START([📸 Instagram Request]) --> CHECK{🔒 Safety Only<br/>No Topical Check}
     CHECK -->|Safe| IMAGE[🖼️ Generate 1:1 Image]
@@ -168,13 +168,13 @@ flowchart TD
     CAPTION --> FORMAT[Format as Instagram Post]
     FORMAT --> RETURN([✅ Return Complete Post])
     
-    style START fill:#db2777,stroke:#be185d,stroke-width:2px,color:#fff
-    style CHECK fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
-    style IMAGE fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    style CAPTION_ONLY fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style CAPTION fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style FORMAT fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style RETURN fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style START fill:#f778ba,stroke:#ff9bce,stroke-width:2px,color:#ffffff
+    style CHECK fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style IMAGE fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style CAPTION_ONLY fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style CAPTION fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style FORMAT fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RETURN fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
 ```
 
 > **Note:** Instagram posts use **SAFETY guardrails only** (no topical check). This allows creative freedom while still blocking inappropriate content like profanity, violence, or explicit material.

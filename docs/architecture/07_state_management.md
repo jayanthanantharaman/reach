@@ -13,6 +13,7 @@ REACH uses a session-based state management system to:
 ## State Management Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 stateDiagram-v2
     [*] --> Idle
     Idle --> Processing: User Request
@@ -41,8 +42,9 @@ stateDiagram-v2
 ## Session State Flow
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart LR
-    subgraph "Session Lifecycle"
+    subgraph LIFECYCLE["Session Lifecycle"]
         CREATE[Create Session] --> ACTIVE[Active Session]
         ACTIVE --> |Add Message| UPDATE[Update History]
         UPDATE --> ACTIVE
@@ -53,10 +55,10 @@ flowchart LR
         ACTIVE --> |Clear| CLEAR[Clear History]
         CLEAR --> ACTIVE
         ACTIVE --> |Delete| DELETE[Delete Session]
-        DELETE --> END([Session Ended])
+        DELETE --> END_STATE([Session Ended])
     end
     
-    subgraph "ConversationState Data"
+    subgraph DATA_LAYER["ConversationState Data"]
         ACTIVE --> DATA[Session State]
         DATA --> ID[conversation_id: str]
         DATA --> MESSAGES[messages: list~Message~]
@@ -66,7 +68,7 @@ flowchart LR
         DATA --> TIMESTAMPS[created_at / updated_at]
     end
     
-    subgraph "Message Structure"
+    subgraph MSG_LAYER["Message Structure"]
         MESSAGES --> MSG[Message]
         MSG --> ROLE[role: 'user' | 'assistant']
         MSG --> MSG_CONTENT[content: str]
@@ -74,9 +76,26 @@ flowchart LR
         MSG --> METADATA[metadata: dict]
     end
 
-    style CREATE fill:#e3f2fd
-    style ACTIVE fill:#c8e6c9
-    style END fill:#ffcdd2
+    style CREATE fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style ACTIVE fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style UPDATE fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style STORE fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style CONTEXT_UPDATE fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style CLEAR fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style DELETE fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#ffffff
+    style END_STATE fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style DATA fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style ID fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style MESSAGES fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style CONTEXT fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style AGENT fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style CONTENT fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style TIMESTAMPS fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style MSG fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style ROLE fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style MSG_CONTENT fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style TIMESTAMP fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style METADATA fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
 ```
 
 ## ConversationState Class

@@ -13,10 +13,11 @@ The guardrails run sequentially with safety checks first (fail-fast pattern).
 ## Guardrails Flow Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     INPUT([📥 User Input]) --> SAFETY_CHECK{🔒 Safety Check<br/>Runs First}
     
-    subgraph "Safety Guard"
+    subgraph SAFETY["Safety Guard"]
         SAFETY_CHECK -->|Check| PROFANITY{Contains<br/>Profanity?}
         PROFANITY -->|Yes| BLOCK_PROF[❌ Block]
         PROFANITY -->|No| LEETSPEAK{Check<br/>Leetspeak?}
@@ -32,7 +33,7 @@ flowchart TD
     
     PASS_SAFETY --> TOPIC_CHECK{📋 Topic Check}
     
-    subgraph "Topical Guard"
+    subgraph TOPICAL["Topical Guard"]
         TOPIC_CHECK -->|Analyze| RE_KEYWORDS{Real Estate<br/>Keywords?}
         RE_KEYWORDS -->|Found| PASS_TOPIC[✅ Pass Topic]
         RE_KEYWORDS -->|Not Found| OFF_TOPIC{Off-Topic<br/>Keywords?}
@@ -51,14 +52,28 @@ flowchart TD
     ALLOW_DEFAULT --> CONTINUE([Continue to Router])
     PASS_TOPIC --> CONTINUE
 
-    style INPUT fill:#e3f2fd
-    style BLOCK_PROF fill:#ffcdd2
-    style BLOCK_INAPP fill:#ffcdd2
-    style BLOCK_SEMANTIC fill:#ffcdd2
-    style BLOCK_TOPIC fill:#ffcdd2
-    style PASS_SAFETY fill:#c8e6c9
-    style PASS_TOPIC fill:#c8e6c9
-    style ALLOW_DEFAULT fill:#c8e6c9
+    style INPUT fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style SAFETY_CHECK fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#ffffff
+    style PROFANITY fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style LEETSPEAK fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style INAPPROPRIATE fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style STRICT_MODE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style SEMANTIC_SAFETY fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style BLOCK_PROF fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style BLOCK_INAPP fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style BLOCK_SEMANTIC fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style PASS_SAFETY fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style TOPIC_CHECK fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style RE_KEYWORDS fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style OFF_TOPIC fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style CONFIDENCE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style LLM_CHECK fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style BLOCK_TOPIC fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style PASS_TOPIC fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style ALLOW_DEFAULT fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style RETURN_ERROR fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style RETURN_TOPIC_ERROR fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style CONTINUE fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
 ```
 
 ## Safety Guard

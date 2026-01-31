@@ -13,6 +13,7 @@ REACH implements comprehensive error handling at multiple levels:
 ## Error Handling Flow
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     ERROR([⚠️ Error Occurred]) --> TYPE{Error Type}
     
@@ -37,13 +38,22 @@ flowchart TD
     WORKFLOW_MSG --> UPDATE_SESSION
     
     UPDATE_SESSION --> RETURN_RESULT[Return Result with<br/>success=False]
-    RETURN_RESULT --> END([📤 Return to User])
+    RETURN_RESULT --> END_STATE([📤 Return to User])
 
-    style ERROR fill:#ffebee
-    style RETURN_RESULT fill:#fff3e0
-    style SAFETY_MSG fill:#ffcdd2
-    style TOPIC_MSG fill:#ffcdd2
-    style IMAGE_MSG fill:#ffcdd2
+    style ERROR fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#ffffff
+    style TYPE fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style LOG_API fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style API_MSG fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style BLOCK_TYPE fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style SAFETY_MSG fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style TOPIC_MSG fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style IMAGE_MSG fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style ROUTE_MSG fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style LOG_WORKFLOW fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style WORKFLOW_MSG fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style UPDATE_SESSION fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RETURN_RESULT fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style END_STATE fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
 ```
 
 ## Error Types

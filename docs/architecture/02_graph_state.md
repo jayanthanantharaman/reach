@@ -26,6 +26,7 @@ class GraphState(TypedDict):
 ## Class Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 classDiagram
     class GraphState {
         +str user_input
@@ -148,11 +149,18 @@ class ContentType(str, Enum):
 ## State Flow Through Nodes
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart LR
     INIT[Initial State] --> GUARDRAILS[Guardrails Node]
     GUARDRAILS --> |Add guardrails_result| ROUTE[Route Node]
     ROUTE --> |Add route_decision| AGENT[Agent Node]
     AGENT --> |Add generated_content,<br/>content_type| END[Final State]
+
+    style INIT fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style GUARDRAILS fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style ROUTE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style AGENT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style END fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
 ```
 
 ## Example State

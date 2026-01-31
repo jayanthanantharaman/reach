@@ -13,6 +13,7 @@ This is useful when you want to ensure content is backed by research data.
 ## Research-First Flow Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     START([📚 Research-First Request]) --> RESEARCH_PHASE[Phase 1: Research]
     
@@ -37,14 +38,25 @@ flowchart TD
     CONTENT_RESULT -->|Yes| RETURN_COMBINED[Return Combined Result:<br/>research + content]
     CONTENT_RESULT -->|No| RETURN_CONTENT_ERROR[Return Content Error]
     
-    RETURN_ERROR --> END([📤 Return to User])
-    RETURN_COMBINED --> END
-    RETURN_CONTENT_ERROR --> END
+    RETURN_ERROR --> END_STATE([📤 Return to User])
+    RETURN_COMBINED --> END_STATE
+    RETURN_CONTENT_ERROR --> END_STATE
 
-    style START fill:#e3f2fd
-    style RETURN_COMBINED fill:#c8e6c9
-    style RETURN_ERROR fill:#ffcdd2
-    style RETURN_CONTENT_ERROR fill:#ffcdd2
+    style START fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style RESEARCH_PHASE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RUN_RESEARCH fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style RESEARCH_SUCCESS fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style RETURN_ERROR fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style STORE_RESEARCH fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style CONTENT_PHASE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style SELECT_TYPE fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style BLOG_PROMPT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style LINKEDIN_PROMPT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style STRATEGY_PROMPT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style CONTENT_RESULT fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style RETURN_COMBINED fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style RETURN_CONTENT_ERROR fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style END_STATE fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
 ```
 
 ## API Method

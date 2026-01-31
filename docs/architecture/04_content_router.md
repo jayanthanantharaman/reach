@@ -13,6 +13,7 @@ The Content Router analyzes user input and routes it to the most appropriate age
 ## Router Flow Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     REQUEST([📥 Validated Request]) --> PATTERN_MATCH[🔍 Pattern Matching<br/>High Priority]
     
@@ -45,15 +46,26 @@ flowchart TD
     HISTORY_CONTEXT -->|Yes| HISTORY_ROUTE[Route Based on Context<br/>confidence=0.6]
     HISTORY_CONTEXT -->|No| GENERAL_AGENT[🤖 Query Handler<br/>confidence=0.5]
 
-    style REQUEST fill:#e3f2fd
-    style RESEARCH_AGENT fill:#e8f5e9
-    style BLOG_AGENT fill:#e8f5e9
-    style LINKEDIN_AGENT fill:#e8f5e9
-    style IMAGE_AGENT fill:#e8f5e9
-    style STRATEGY_AGENT fill:#e8f5e9
-    style KEYWORD_ROUTE fill:#fff3e0
-    style HISTORY_ROUTE fill:#fff3e0
-    style GENERAL_AGENT fill:#fff3e0
+    style REQUEST fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style PATTERN_MATCH fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RESEARCH_PATTERN fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style BLOG_PATTERN fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style LINKEDIN_PATTERN fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style IMAGE_PATTERN fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style STRATEGY_PATTERN fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style RESEARCH_AGENT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style BLOG_AGENT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style LINKEDIN_AGENT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style IMAGE_AGENT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style STRATEGY_AGENT fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style KEYWORD_SCORING fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style SCORE_KEYWORDS fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style BEST_MATCH fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style KEYWORD_ROUTE fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style CHECK_HISTORY fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style HISTORY_CONTEXT fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style HISTORY_ROUTE fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style GENERAL_AGENT fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
 ```
 
 ## Pattern Matching
@@ -175,6 +187,7 @@ def _infer_from_history(self, conversation_history: list[dict]) -> Optional[Cont
 ## Routing Decision Model
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 classDiagram
     class RoutingDecision {
         +ContentType content_type

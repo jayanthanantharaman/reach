@@ -31,7 +31,7 @@ REACH is a sophisticated multi-agent system built with LangGraph that transforms
 ### System Architecture Diagram
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 graph TB
     subgraph UI_LAYER["🖥️ User Interface"]
         UI[Streamlit Web App]
@@ -110,29 +110,29 @@ graph TB
     IC --> IMAGEN
     SC --> SERP
 
-    style UI fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
-    style STREAM fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
-    style COPY fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
-    style CS fill:#ca8a04,stroke:#a16207,stroke-width:2px,color:#fff
-    style WF fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff
-    style SM fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
-    style RT fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
-    style GR fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
-    style TG fill:#991b1b,stroke:#7f1d1d,stroke-width:2px,color:#fff
-    style SG fill:#991b1b,stroke:#7f1d1d,stroke-width:2px,color:#fff
-    style QH fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style RA fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style BW fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style LW fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style IW fill:#db2777,stroke:#be185d,stroke-width:2px,color:#fff
-    style IG fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style CST fill:#0891b2,stroke:#0e7490,stroke-width:2px,color:#fff
-    style GC fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style IC fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style SC fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
-    style GEMINI fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
-    style IMAGEN fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
-    style SERP fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#fff
+    style UI fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style STREAM fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style COPY fill:#58a6ff,stroke:#79c0ff,stroke-width:2px,color:#ffffff
+    style CS fill:#e3b341,stroke:#f0d75e,stroke-width:2px,color:#0d1117
+    style WF fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style SM fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style RT fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style GR fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#ffffff
+    style TG fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style SG fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style QH fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style RA fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style BW fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style LW fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style IW fill:#f778ba,stroke:#ff9bce,stroke-width:2px,color:#ffffff
+    style IG fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style CST fill:#39d353,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style GC fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style IC fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style SC fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style GEMINI fill:#238636,stroke:#3fb950,stroke-width:2px,color:#ffffff
+    style IMAGEN fill:#238636,stroke:#3fb950,stroke-width:2px,color:#ffffff
+    style SERP fill:#238636,stroke:#3fb950,stroke-width:2px,color:#ffffff
 ```
 
 ### Component Overview

@@ -21,6 +21,7 @@ REACH provides specialized methods for generating Instagram content:
 When a user types an Instagram-related prompt in the chat, the following flow is executed:
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
     START([📸 User: "Create Instagram post for..."]) --> ROUTER{🎯 Content Router}
     
@@ -45,12 +46,19 @@ flowchart TD
     
     COMBINE --> RETURN([✅ Return Complete Post])
 
-    style START fill:#e3f2fd
-    style INSTAGRAM_NODE fill:#e8f5e9
-    style GEN_IMAGE fill:#fff3e0
-    style GEN_CAPTION fill:#fff3e0
-    style RETURN fill:#c8e6c9
-    style FALLBACK fill:#fff3e0
+    style START fill:#f778ba,stroke:#ff9bce,stroke-width:2px,color:#ffffff
+    style ROUTER fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style INSTAGRAM_NODE fill:#f778ba,stroke:#ff9bce,stroke-width:2px,color:#ffffff
+    style GUARDRAILS fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style CAPTION_ONLY fill:#8b949e,stroke:#b1bac4,stroke-width:2px,color:#ffffff
+    style GEN_IMAGE fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style EXTRACT_URI fill:#79c0ff,stroke:#a5d6ff,stroke-width:2px,color:#0d1117
+    style GEN_CAPTION fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
+    style VALIDATE fill:#d29922,stroke:#e3b341,stroke-width:2px,color:#ffffff
+    style FORMAT fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style FALLBACK fill:#fb8f44,stroke:#ffa657,stroke-width:2px,color:#ffffff
+    style COMBINE fill:#a371f7,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style RETURN fill:#3fb950,stroke:#56d364,stroke-width:2px,color:#ffffff
 ```
 
 ## Instagram Node Implementation
