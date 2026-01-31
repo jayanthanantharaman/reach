@@ -121,13 +121,18 @@ def render_sidebar():
 
         st.divider()
 
-        # Guardrails status
-        st.subheader("🛡️ Guardrails")
-        guardrails_status = st.session_state.graph.get_guardrails_status()
-        if guardrails_status.get("topical_enabled"):
-            st.success("✅ Real Estate Topics Only")
-        if guardrails_status.get("safety_enabled"):
-            st.success("✅ Safety Filters Active")
+        # Example prompts (moved from bottom)
+        st.subheader("💡 Try These Prompts")
+        example_prompts = [
+            "Write a blog post about home staging tips",
+            "Create a LinkedIn post about market trends",
+            "Generate an Instagram post for a luxury condo",
+            "Research current housing market in Austin",
+            "Generate an image for a modern home listing",
+            "Create a content strategy for a realtor",
+        ]
+        for prompt in example_prompts:
+            st.caption(f"• {prompt}")
 
         st.divider()
 
@@ -159,20 +164,6 @@ def render_sidebar():
             value=True,
         )
 
-        st.divider()
-
-        # Example prompts
-        st.subheader("💡 Try These Prompts")
-        example_prompts = [
-            "Write a blog post about home staging tips",
-            "Create a LinkedIn post about market trends",
-            "Generate an Instagram post for a luxury condo",
-            "Research current housing market in Austin",
-            "Generate an image for a modern home listing",
-            "Create a content strategy for a realtor",
-        ]
-        for prompt in example_prompts:
-            st.caption(f"• {prompt}")
 
 
 def render_copy_button(content: str, key: str):

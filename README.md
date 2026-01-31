@@ -188,42 +188,6 @@ sequenceDiagram
 
 > 📖 **For detailed flowcharts** of the LangGraph agent decision-making process, see [docs/langgraph_flowchart.md](docs/langgraph_flowchart.md)
 
-### 📊 Viewing the Diagrams
-
-The architecture diagrams use **Mermaid** syntax. Here's how to view them:
-
-#### Option 1: GitHub (Automatic)
-GitHub automatically renders Mermaid diagrams in Markdown files. Simply view the README.md or flowchart files on GitHub.
-
-#### Option 2: VS Code Extension
-Install the [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) extension:
-```bash
-code --install-extension bierner.markdown-mermaid
-```
-Then use `Cmd+Shift+V` (Mac) or `Ctrl+Shift+V` (Windows/Linux) to preview.
-
-#### Option 3: Mermaid Live Editor
-Copy the Mermaid code blocks to [Mermaid Live Editor](https://mermaid.live/) for interactive viewing and editing.
-
-#### Option 4: Generate PNG/SVG Images
-Use the Mermaid CLI to generate static images:
-```bash
-# Install Mermaid CLI
-npm install -g @mermaid-js/mermaid-cli
-
-# Generate PNG from the flowchart
-mmdc -i docs/langgraph_flowchart.md -o docs/flowchart.png
-
-# Generate SVG
-mmdc -i docs/langgraph_flowchart.md -o docs/flowchart.svg -f svg
-```
-
-#### Option 5: Jupyter Notebook
-If using Jupyter, install the mermaid extension:
-```bash
-pip install jupyterlab-mermaid
-```
-
 ## 🚀 Quick Start
 
 ### Prerequisites
