@@ -18,7 +18,7 @@ flowchart TD
     ERROR([⚠️ Error Occurred]) --> TYPE{Error Type}
     
     TYPE -->|API Error| LOG_API[📋 Log Error]
-    LOG_API --> API_MSG[Return Error Message:<br/>'Agent failed: error']
+    LOG_API --> API_MSG[Return Error Message:<br/>Agent failed]
     
     TYPE -->|Guardrails Block| BLOCK_TYPE{Block Type?}
     BLOCK_TYPE -->|Safety| SAFETY_MSG[📝 Return Safety Message]
@@ -28,7 +28,7 @@ flowchart TD
     TYPE -->|Routing Error| ROUTE_MSG[📝 Return Routing Error]
     
     TYPE -->|Workflow Error| LOG_WORKFLOW[📋 Log Error]
-    LOG_WORKFLOW --> WORKFLOW_MSG[Return: 'An error occurred: error']
+    LOG_WORKFLOW --> WORKFLOW_MSG[Return Error Message]
     
     API_MSG --> UPDATE_SESSION[Update Session with Error]
     SAFETY_MSG --> UPDATE_SESSION

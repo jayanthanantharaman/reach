@@ -17,7 +17,7 @@ This is useful when you want to ensure content is backed by research data.
 flowchart TD
     START([📚 Research-First Request]) --> RESEARCH_PHASE[Phase 1: Research]
     
-    RESEARCH_PHASE --> RUN_RESEARCH[Run: 'Research: topic']
+    RESEARCH_PHASE --> RUN_RESEARCH[Run Research on Topic]
     RUN_RESEARCH --> RESEARCH_SUCCESS{Research<br/>Successful?}
     
     RESEARCH_SUCCESS -->|No| RETURN_ERROR[Return Research Error]
@@ -26,9 +26,9 @@ flowchart TD
     STORE_RESEARCH --> CONTENT_PHASE[Phase 2: Content Creation]
     
     CONTENT_PHASE --> SELECT_TYPE{Content Type?}
-    SELECT_TYPE -->|blog| BLOG_PROMPT[Run: 'Write a blog post about: topic']
-    SELECT_TYPE -->|linkedin| LINKEDIN_PROMPT[Run: 'Create a LinkedIn post about: topic']
-    SELECT_TYPE -->|strategy| STRATEGY_PROMPT[Run: 'Create a content strategy for: topic']
+    SELECT_TYPE -->|blog| BLOG_PROMPT[Run Blog Writer]
+    SELECT_TYPE -->|linkedin| LINKEDIN_PROMPT[Run LinkedIn Writer]
+    SELECT_TYPE -->|strategy| STRATEGY_PROMPT[Run Strategy Writer]
     
     BLOG_PROMPT --> CONTENT_RESULT
     LINKEDIN_PROMPT --> CONTENT_RESULT
