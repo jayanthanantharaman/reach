@@ -70,7 +70,7 @@ flowchart LR
     
     subgraph MSG_LAYER["Message Structure"]
         MESSAGES --> MSG[Message]
-        MSG --> ROLE[role: 'user' | 'assistant']
+        MSG --> ROLE[user | assistant]
         MSG --> MSG_CONTENT[content: str]
         MSG --> TIMESTAMP[timestamp: datetime]
         MSG --> METADATA[metadata: dict]
