@@ -23,7 +23,7 @@ When a user types an Instagram-related prompt in the chat, the following flow is
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22', 'background': '#0d1117'}}}%%
 flowchart TD
-    START([📸 User: "Create Instagram post for..."]) --> ROUTER{🎯 Content Router}
+    START([📸 User Request: Create Instagram post]) --> ROUTER{🎯 Content Router}
     
     ROUTER -->|Detects instagram/ig/insta| INSTAGRAM_NODE[📸 Instagram Node]
     
